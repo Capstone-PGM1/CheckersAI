@@ -28,6 +28,7 @@ class LegalMove(object):
 
 class GameState(object):
     activePlayer: int
+    board: [[Cell]]
 
     def __init__(self, board=[], empty_moves=0, active_player=0):
         self.board = board

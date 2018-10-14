@@ -102,9 +102,18 @@ def append_legal_jump(moves, new_move):
         moves.append(new_move)
 
 
+def is_king_condition(state, c_row, c_column, e_row):
+    return not state.board[c_row][c_column].piece.king and\
+                ((state.board[c_row][c_column].piece.color == 0 and e_row == 7) or
+                 (state.board[c_row][c_column].piece.color == 1 and e_row == 0))
+
+
 def calculate_legal_jumps(state, c_row, c_column, piece_number, c_path, all_paths):
     def recursive(e_row, e_column):
         move = [Move(c_row, c_column, e_row, e_column)]
+        if is_king_condition(state, c_row, c_column, e_row):
+            append_legal_jump(all_paths, LegalMove(e_row, e_column, piece_number, c_path + move))
+            return
         new_state = copy.deepcopy(state)
         update_game_state_with_move(new_state, LegalMove(e_row, e_column, 1, move))
         calculate_legal_jumps(new_state, e_row, e_column, piece_number + 1, c_path + move, all_paths)
@@ -169,9 +178,15 @@ def send_game_state_to_ui(state):
                 else:
                     print("o", end=" ")
             elif state.board[row][column].piece.color == 0:
-                print("R", end=" ")
+                if state.board[row][column].piece.king:
+                    print("K", end=" ")
+                else:
+                    print("R", end=" ")
             else:
-                print("B", end=" ")
+                if state.board[row][column].piece.king:
+                    print("Q", end=" ")
+                else:
+                    print("B", end=" ")
         print("")
 
 
@@ -206,6 +221,8 @@ def update_game_state_with_move(state, legal_move):
         start_row = legal_move.moves[0].fromRow
         start_column = legal_move.moves[0].fromColumn
         state.board[legal_move.endRow][legal_move.endColumn].piece = copy.deepcopy(state.board[start_row][start_column].piece)
+        if is_king_condition(state, start_row, start_column, legal_move.endRow):
+            state.board[legal_move.endRow][legal_move.endColumn].piece.king = True
         state.board[start_row][start_column].piece.color = 2
         if abs(start_row - legal_move.moves[0].toRow) == 2:
             state.emptyMoves = 0

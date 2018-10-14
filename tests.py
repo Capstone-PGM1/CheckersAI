@@ -262,4 +262,5 @@ else:
         if move.piecesNumber != 0:
             print("failed get_all_legal_moves: something's wrong with jump computation")
 
+
 run_game(GameState())
