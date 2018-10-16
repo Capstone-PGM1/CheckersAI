@@ -161,7 +161,46 @@ def get_all_legal_moves(state):
                     if len(state.board[row][column].possibleMoves) > 0:
                         the_move = state.board[row][column].possibleMoves[0]
                         if abs(the_move.moves[0].fromRow - the_move.moves[0].toRow) != 2:
-                            state.board[row][column].possibleMoves = []
+                            state.board[row][column].possibleMoves.clear()
+
+
+def update_game_state_with_move(state, legal_move):
+    if len(legal_move.moves) > 0:
+        start_row = legal_move.moves[0].fromRow
+        start_column = legal_move.moves[0].fromColumn
+        state.board[legal_move.endRow][legal_move.endColumn].piece = copy.deepcopy(state.board[start_row][start_column].piece)
+        if is_king_condition(state, start_row, start_column, legal_move.endRow):
+            state.board[legal_move.endRow][legal_move.endColumn].piece.king = True
+        state.board[start_row][start_column].piece.color = 2
+        if abs(start_row - legal_move.moves[0].toRow) == 2:
+            state.emptyMoves = 0
+            for move in legal_move.moves:
+                state.board[(move.fromRow + move.toRow) // 2][(move.fromColumn + move.toColumn) // 2].piece.color = 2
+        elif not state.board[start_row][start_column].piece.king:
+            state.emptyMoves = 0
+        else:
+            state.emptyMoves = state.emptyMoves + 1
+    else:
+        print("BIG ERROR: legal_move doesn't have any moves in it")
+
+
+def is_draw(state):
+    return state.emptyMoves >= 40
+
+
+def is_win(state):
+    state_copy = copy.deepcopy(state)
+    get_all_legal_moves(state_copy)
+    for row in state_copy.board:
+        for cell in row:
+            if cell.piece.color == state_copy.activePlayer:
+                if len(cell.possibleMoves) > 0:
+                    return False
+    return True
+
+
+def is_game_over(state):
+    is_draw(state) or is_win(state)
 
 
 def send_game_state_to_ui(state):
@@ -201,8 +240,8 @@ def get_move_from_player(state):
         row = int(input("row: "))
         column = int(input("column: "))
         for move in state.board[row][column].possibleMoves:
-            print('{0} {1}taking {2}pieces'.format(str(move.endRow), str(move.endColumn),
-                                                   str(move.piecesNumber)))
+            print('{0} {1} taking {2} pieces'.format(str(move.endRow), str(move.endColumn),
+                                                     str(move.piecesNumber)))
         show_moves = input("Y for show possible moves, N for input your move")
     print("Input the piece to move:")
     row = int(input("row: "))
@@ -216,46 +255,6 @@ def get_move_from_player(state):
     print("BIG ERROR, DIDN'T FIND THE LEGAL MOVE")
 
 
-def update_game_state_with_move(state, legal_move):
-    if len(legal_move.moves) > 0:
-        start_row = legal_move.moves[0].fromRow
-        start_column = legal_move.moves[0].fromColumn
-        state.board[legal_move.endRow][legal_move.endColumn].piece = copy.deepcopy(state.board[start_row][start_column].piece)
-        if is_king_condition(state, start_row, start_column, legal_move.endRow):
-            state.board[legal_move.endRow][legal_move.endColumn].piece.king = True
-        state.board[start_row][start_column].piece.color = 2
-        if abs(start_row - legal_move.moves[0].toRow) == 2:
-            state.emptyMoves = 0
-            for move in legal_move.moves:
-                state.board[(move.fromRow + move.toRow) // 2][(move.fromColumn + move.toColumn) // 2].piece.color = 2
-        elif not state.board[start_row][start_column].piece.king:
-            state.emptyMoves = 0
-        else:
-            state.emptyMoves = state.emptyMoves + 1
-    else:
-        print("BIG ERROR: legal_move doesn't have any moves in it")
-
-
-def is_draw(state):
-    return state.emptyMoves >= 40
-
-
-def is_win(state):
-    state_copy = copy.deepcopy(state)
-    state_copy.activePlayer = (state.activePlayer + 1) % 2
-    get_all_legal_moves(state_copy)
-    for row in state_copy.board:
-        for cell in row:
-            if cell.piece.color == state_copy.activePlayer:
-                if len(cell.possibleMoves) > 0:
-                    return False
-    return True
-
-
-def is_game_over(state):
-    is_draw(state) or is_win(state)
-
-
 def send_message_ui(message):
     print(message)
 
@@ -266,13 +265,12 @@ def run_game(game):  # game = GameState
         send_game_state_to_ui(game)
         move = get_move_from_player(game)
         update_game_state_with_move(game, move)
-        if is_draw(game):
-            send_message_ui("It's a draw")
-        elif is_win(game):
-            if game.activePlayer == 0:
-                name = "Red"
-            else:
-                name = "Black"
-            send_message_ui(name + " is a winner!")
+        game.activePlayer = (game.activePlayer + 1) % 2
+    if is_draw(game):
+        send_message_ui("It's a draw")
+    elif is_win(game):
+        if game.activePlayer == 0:
+            name = "Black"
         else:
-            game.activePlayer = (game.activePlayer + 1) % 2
+            name = "Red"
+        send_message_ui(name + " is a winner!")

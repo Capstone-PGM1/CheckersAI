@@ -4,12 +4,6 @@ class Piece(object):
         self.king = king
 
 
-class Cell(object):
-    def __init__(self, color, king=False):
-        self.piece = Piece(color, king)  # piece is 0 for red, 1 for black, 2 for empty
-        self.possibleMoves = []
-
-
 class Move(object):
     def __init__(self, from_row, from_column, to_row, to_column):
         self.fromRow = from_row
@@ -24,6 +18,14 @@ class LegalMove(object):
         self.endColumn = column
         self.piecesNumber = pieces  # number of cells taken on this move
         self.moves = moves
+
+
+class Cell(object):
+    possibleMoves: [LegalMove]
+
+    def __init__(self, color, king=False):
+        self.piece = Piece(color, king)  # piece is 0 for red, 1 for black, 2 for empty
+        self.possibleMoves = []
 
 
 class GameState(object):
