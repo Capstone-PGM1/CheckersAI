@@ -11,10 +11,21 @@ def make_empty_board():
     return board
 
 
-red_simple = lambda: Cell(0)
-red_king = lambda: Cell(0, True)
-black_simple = lambda: Cell(1)
-black_king = lambda: Cell(1, True)
+def red_simple():
+    return Cell(0)
+
+
+def red_king():
+    return Cell(0, True)
+
+
+def black_simple():
+    return Cell(1)
+
+
+def black_king():
+    return Cell(1, True)
+
 
 test_board = make_empty_board()
 
@@ -263,4 +274,4 @@ else:
             print("failed get_all_legal_moves: something's wrong with jump computation")
 
 
-run_game(GameState())
+run_game_state(GameState())

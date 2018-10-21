@@ -1,4 +1,6 @@
 import copy
+import sys
+from random import randint
 
 
 class Piece(object):
@@ -65,6 +67,15 @@ class GameState(object):
                 self.board.append(temp_row)
         self.emptyMoves = empty_moves  # for 40 moves definition of draw
         self.activePlayer = active_player  # 0 is red player, 1 is black
+
+    def switch_player(self):
+        self.activePlayer = (self.activePlayer + 1) % 2
+
+    def do_to_all_active_cells(self, method_to_apply):
+        for row in range(8):
+            for column in range(8):
+                if self.board[row][column].piece.color == self.activePlayer:
+                    method_to_apply(self.board[row][column])
 
     def can_jump_left(self, row, column):
         if column - 2 >= 0 and row + 2 < 8 and self.board[row + 2][column - 2].piece.color == 2:
@@ -153,8 +164,8 @@ class GameState(object):
         def recursive(e_row, e_column):
             move = [Move(c_row, c_column, e_row, e_column)]
             if self.is_king_condition(c_row, c_column, e_row):
-                new_move = LegalMove(e_row, e_column, piece_number, c_path + move)
-                new_move.append_legal_jump(all_paths)
+                new_m = LegalMove(e_row, e_column, piece_number, c_path + move)
+                new_m.append_legal_jump(all_paths)
                 return
             new_state = copy.deepcopy(self)
             new_state.update_game_state_with_move(LegalMove(e_row, e_column, 1, move))
@@ -227,11 +238,9 @@ class GameState(object):
             print("BIG ERROR: legal_move doesn't have any moves in it")
 
     def is_win(self):
-        state_copy = copy.deepcopy(self)
-        state_copy.get_all_legal_moves()
-        for row in state_copy.board:
+        for row in self.board:
             for cell in row:
-                if cell.piece.color == state_copy.activePlayer:
+                if cell.piece.color == self.activePlayer:
                     if len(cell.possibleMoves) > 0:
                         return False
         return True
@@ -241,3 +250,94 @@ class GameState(object):
 
     def is_game_over(self):
         self.is_draw() or self.is_win()
+
+    def get_state_value(self, maximizing_player):
+        if self.is_game_over():
+            if self.is_win():
+                if maximizing_player:
+                    return -sys.maxsize - 1
+                else:
+                    return sys.maxsize
+            else:
+                return sys.maxsize - 100  # draw is good, but not as good as a win
+        else:
+            value = 0
+            for row in range(8):
+                for column in range(8):
+                    piece = self.board[row][column].piece
+                    if piece.color == self.activePlayer:
+                        value = value + 10
+                        if piece.king:
+                            value = value + 5
+                        else:
+                            if self.activePlayer == 0:
+                                dist_to_king = 7 - row
+                            else:
+                                dist_to_king = row
+                            if dist_to_king < 4:
+                                value = value + 4 - dist_to_king
+                        if self.board[row][column].possibleMoves == 0:
+                            value = value - 8
+            return value
+
+    def get_ai_move(self):
+        max_val = -sys.maxsize - 1
+        moves = []
+        for row in range(8):
+            for column in range(8):
+                if self.board[row][column].piece.color == self.activePlayer:
+                    for move in self.board[row][column].possibleMoves:
+                        state_copy = copy.deepcopy(self)
+                        state_copy.update_game_state_with_move(move)
+                        cur_val = state_copy.minimax(2, True)
+                        if max_val < cur_val:
+                            max_val = cur_val
+                            moves.clear()
+                        if not max_val > cur_val:
+                            moves.append(move)
+        if len(moves) > 0:
+            if len(moves) == 1:
+                m = moves[0]
+            else:
+                m = moves[randint(0, len(moves) - 1)]
+            print("Moving to row " + str(m.endRow) + " column " + str(m.endColumn) + " from row " +
+                  str(m.moves[0].fromRow) + " column " + str(m.moves[0].fromColumn))
+            return m
+
+    # based on pseudo-code from https://en.wikipedia.org/wiki/Minimax
+    def minimax(self, depth, maximizing_player):
+        if depth == 0 or self.is_game_over():
+            return self.get_state_value(maximizing_player)
+        children_found = False
+        if maximizing_player:
+            val = -sys.maxsize - 1
+            for row in range(8):
+                for column in range(8):
+                    if self.board[row][column].piece.color == self.activePlayer:
+                        for move in self.board[row][column].possibleMoves:
+                            state_copy = copy.deepcopy(self)
+                            state_copy.update_game_state_with_move(move)
+                            state_copy.switch_player()
+                            state_copy.get_all_legal_moves()
+                            val = max(val, state_copy.minimax(depth - 1, False))
+                            children_found = True
+            if children_found:
+                return val
+            else:
+                return self.get_state_value(maximizing_player)
+        else:  # (*minimizing player *)
+            val = sys.maxsize
+            for row in range(8):
+                for column in range(8):
+                    if self.board[row][column].piece.color == self.activePlayer:
+                        for move in self.board[row][column].possibleMoves:
+                            state_copy = copy.deepcopy(self)
+                            state_copy.update_game_state_with_move(move)
+                            state_copy.switch_player()
+                            state_copy.get_all_legal_moves()
+                            val = min(val, state_copy.minimax(depth - 1, True))
+                            children_found = True
+            if children_found:
+                return val
+            else:
+                return self.get_state_value(maximizing_player)
