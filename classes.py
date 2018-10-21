@@ -3,12 +3,14 @@ import sys
 from random import randint
 
 
+# lives in each Cell on the board
 class Piece(object):
     def __init__(self, color, king=False):
-        self.color = color
+        self.color = color   # 0 is red, 1 is white, 2 is Empty
         self.king = king
 
 
+# a one move from Cell to Cell, part of LegalMove
 class Move(object):
     def __init__(self, from_row, from_column, to_row, to_column):
         self.fromRow = from_row
@@ -17,13 +19,19 @@ class Move(object):
         self.toColumn = to_column
 
 
+# can be jump can be simple move
 class LegalMove(object):
     def __init__(self, row, column, pieces, moves):
         self.endRow = row
         self.endColumn = column
         self.piecesNumber = pieces  # number of cells taken on this move
-        self.moves = moves
+        self.moves = moves  # a list of Move from start cell to end cell, there are several Move for a jumping path \
+        #  or only one Move for simple piece move
 
+    # checks if there is already a LegalMove in the list with the same end Cell. If not - simply appends new
+    # LegalMove to the list. If there is one, if the new LegalMove has more pieces taken - replace the one in the
+    # list with new LegalMove, else - does nothing.
+    # modifies the actual list, doesn't return anything
     def append_legal_jump(self, moves):
         found = False
         for m in moves:
@@ -37,17 +45,20 @@ class LegalMove(object):
             moves.append(self)
 
 
+# Occupies [row][column] in the board. Always has a piece (color=2 for empty Cell)
 class Cell(object):
-    possibleMoves: [LegalMove]
+    possibleMoves: [LegalMove]  # a list of Possible moves for the piece in the Cell. Always empty for inactive player
 
     def __init__(self, color, king=False):
         self.piece = Piece(color, king)  # piece is 0 for red, 1 for black, 2 for empty
         self.possibleMoves = []
 
 
+# th main class - has board with Cells, active player's number & counter for empty moves
 class GameState(object):
-    activePlayer: int
-    board: [[Cell]]
+    activePlayer: int  # 0 - red, 1 - black
+    board: [[Cell]]  # only activePlayer can have possibleMoves non-empty. Inactive player's list is always cleared
+    emptyMoves: int
 
     def __init__(self, board=[], empty_moves=0, active_player=0):
         self.board = board
@@ -71,13 +82,16 @@ class GameState(object):
     def switch_player(self):
         self.activePlayer = (self.activePlayer + 1) % 2
 
+    # I'll need it later for refactor, isn't used now
     def do_to_all_active_cells(self, method_to_apply):
         for row in range(8):
             for column in range(8):
                 if self.board[row][column].piece.color == self.activePlayer:
                     method_to_apply(self.board[row][column])
 
-    def can_jump_left(self, row, column):
+    # Checks if the piece in board[row][column] can jump left. Does it's own checking for color against activePlayer
+    # color and king/not king condition.
+    def can_jump_left(self, row, column) -> bool:
         if column - 2 >= 0 and row + 2 < 8 and self.board[row + 2][column - 2].piece.color == 2:
             if (self.board[row][column].piece.color == 0 and
                 self.board[row + 1][column - 1].piece.color == 1) or \
@@ -86,7 +100,9 @@ class GameState(object):
                 return True
         return False
 
-    def can_jump_right(self, row, column):
+    # Checks if the piece in board[row][column] can jump right. Does it's own checking for color against activePlayer
+    # color and king/not king condition.
+    def can_jump_right(self, row, column) -> bool:
         if column + 2 < 8 and row + 2 < 8 and self.board[row + 2][column + 2].piece.color == 2:
             if (self.board[row][column].piece.color == 0 and
                 self.board[row + 1][column + 1].piece.color == 1) or \
@@ -95,7 +111,9 @@ class GameState(object):
                 return True
         return False
 
-    def can_jump_back_left(self, row, column):
+    # Checks if the piece in board[row][column] can jump back left. Does it's own checking for color against
+    #  activePlayer color and king/not king condition.
+    def can_jump_back_left(self, row, column) -> bool:
         if column - 2 >= 0 and row - 2 >= 0 and self.board[row - 2][column - 2].piece.color == 2:
             if (self.board[row][column].piece.color == 0 and self.board[row][column].piece.king and
                 self.board[row - 1][column - 1].piece.color == 1) or \
@@ -104,7 +122,9 @@ class GameState(object):
                 return True
         return False
 
-    def can_jump_back_right(self, row, column):
+    # Checks if the piece in board[row][column] can jump back right. Does it's own checking for color against
+    # activePlayer color and king/not king condition.
+    def can_jump_back_right(self, row, column) -> bool:
         if column + 2 < 8 and row - 2 >= 0 and self.board[row - 2][column + 2].piece.color == 2:
             if (self.board[row][column].piece.color == 0 and self.board[row][column].piece.king and
                 self.board[row - 1][column - 1].piece.color == 1) or \
@@ -113,7 +133,9 @@ class GameState(object):
                 return True
         return False
 
-    def can_move_left(self, row, column):
+    # Checks if the piece in board[row][column] can make a simple move left. Does it's own checking for color against
+    # activePlayer color and king/not king condition.
+    def can_move_left(self, row, column) -> bool:
         column_left = column - 1
         row_left = row + 1
         if column_left >= 0 and row_left < 8 and self.board[row_left][column_left].piece.color == 2:
@@ -121,7 +143,9 @@ class GameState(object):
                 return True
         return False
 
-    def can_move_right(self, row, column):
+    # Checks if the piece in board[row][column] can make a simple move right. Does it's own checking for color against
+    # activePlayer color and king/not king condition.
+    def can_move_right(self, row, column) -> bool:
         column_right = column + 1
         row_right = row + 1
         if column_right < 8 and row_right < 8 and self.board[row_right][column_right].piece.color == 2:
@@ -129,7 +153,9 @@ class GameState(object):
                 return True
         return False
 
-    def can_move_back_left(self, row, column):
+    # Checks if the piece in board[row][column] can make a simple move left back. Does it's own checking for color
+    # against activePlayer color and king/not king condition.
+    def can_move_back_left(self, row, column) -> bool:
         column_left = column - 1
         row_left = row - 1
         if column_left >= 0 and row_left >= 0 and self.board[row_left][column_left].piece.color == 2:
@@ -137,7 +163,9 @@ class GameState(object):
                 return True
         return False
 
-    def can_move_back_right(self, row, column):
+    # Checks if the piece in board[row][column] can make a simple move left right. Does it's own checking for color
+    # against activePlayer color and king/not king condition.
+    def can_move_back_right(self, row, column) -> bool:
         column_right = column + 1
         row_right = row - 1
         if column_right < 8 and row_right >= 0 and self.board[row_right][column_right].piece.color == 2:
@@ -145,7 +173,8 @@ class GameState(object):
                 return True
         return False
 
-    def calculate_simple_moves(self, c_row, c_column, path):
+    # Calculates all possible simple moves (not jumps) for a piece. Appends it to path, doesn't return anything
+    def calculate_simple_moves(self, c_row: int, c_column: int, path: [LegalMove]):
         if self.can_move_left(c_row, c_column):
             path.append(LegalMove(c_row + 1, c_column - 1, 0, [Move(c_row, c_column, c_row + 1, c_column - 1)]))
         if self.can_move_right(c_row, c_column):
@@ -155,12 +184,15 @@ class GameState(object):
         if self.can_move_back_right(c_row, c_column):
             path.append(LegalMove(c_row - 1, c_column + 1, 0, [Move(c_row, c_column, c_row - 1, c_column + 1)]))
 
-    def is_king_condition(self, c_row, c_column, e_row):
+    # a condition to end jump sequence - checks if non-king piece reached king-row
+    def is_king_condition(self, c_row, c_column, e_row) -> bool:
         return not self.board[c_row][c_column].piece.king and \
                ((self.board[c_row][c_column].piece.color == 0 and e_row == 7) or
                 (self.board[c_row][c_column].piece.color == 1 and e_row == 0))
 
-    def calculate_legal_jumps(self, c_row, c_column, piece_number, c_path, all_paths):
+    # calculates all legal jumps for the piece and appends it to all_paths. Recursive. c_path is a collector for Move
+    # for current LegalMove being built
+    def calculate_legal_jumps(self, c_row, c_column, piece_number, c_path: [Move], all_paths: [LegalMove]):
         def recursive(e_row, e_column):
             move = [Move(c_row, c_column, e_row, e_column)]
             if self.is_king_condition(c_row, c_column, e_row):
@@ -188,7 +220,9 @@ class GameState(object):
             new_move = LegalMove(c_row, c_column, piece_number, c_path)
             new_move.append_legal_jump(all_paths)
 
-    def calculate_legal_moves(self, row, column):
+    # calculates all legal moves for the piece at board[row][column]
+    # first look for jumps, if non available - looks for simple moves
+    def calculate_legal_moves(self, row, column) -> [[LegalMove], bool]:
         path = []
         self.calculate_legal_jumps(row, column, 0, [], path)
         if len(path) == 0:
@@ -198,6 +232,8 @@ class GameState(object):
             is_jump = True
         return path, is_jump
 
+    # gets all legal moves for all Cells for an activePlayer
+    # clears possibleMoves list for inactive player
     def get_all_legal_moves(self):
         have_jumps = False
         for row in range(8):
@@ -216,7 +252,8 @@ class GameState(object):
                             if abs(the_move.moves[0].fromRow - the_move.moves[0].toRow) != 2:
                                 self.board[row][column].possibleMoves.clear()
 
-    def update_game_state_with_move(self, legal_move):
+    # updates the GameState with LegalMove - "moves" the pieces, removes "taken" pieces
+    def update_game_state_with_move(self, legal_move: LegalMove):
         if len(legal_move.moves) > 0:
             start_row = legal_move.moves[0].fromRow
             start_column = legal_move.moves[0].fromColumn
@@ -237,7 +274,9 @@ class GameState(object):
         else:
             print("BIG ERROR: legal_move doesn't have any moves in it")
 
-    def is_win(self):
+    # checks if the game is over with win condition
+    # ATTENTION - True means the opposite to activePlayer won
+    def is_win(self) -> bool:
         for row in self.board:
             for cell in row:
                 if cell.piece.color == self.activePlayer:
@@ -245,13 +284,16 @@ class GameState(object):
                         return False
         return True
 
-    def is_draw(self):
+    # checks if game is over with a draw
+    def is_draw(self) -> bool:
         return self.emptyMoves >= 40
 
-    def is_game_over(self):
+    # checks if the game is over
+    def is_game_over(self) -> bool:
         self.is_draw() or self.is_win()
 
-    def get_state_value(self, maximizing_player):
+    # evaluation function for minimax - NEEDS MORE THOUGHTS ON IT
+    def get_state_value(self, maximizing_player) -> int:
         if self.is_game_over():
             if self.is_win():
                 if maximizing_player:
@@ -280,7 +322,9 @@ class GameState(object):
                             value = value - 8
             return value
 
-    def get_ai_move(self):
+    # get ai move for 1-player game. Currently calling for minimax algo to find out best move
+    # if several moves has same value, use random number to select one of those
+    def get_ai_move(self) -> LegalMove:
         max_val = -sys.maxsize - 1
         moves = []
         for row in range(8):
@@ -304,9 +348,10 @@ class GameState(object):
                   str(m.moves[0].fromRow) + " column " + str(m.moves[0].fromColumn))
             return m
 
+    # calculate value of state using minimax (no alpha-beta pruning yet - need to make sure it works as it is first)
     # based on pseudo-code from https://en.wikipedia.org/wiki/Minimax
-    def minimax(self, depth, maximizing_player):
-        if depth == 0 or self.is_game_over():
+    def minimax(self, depth, maximizing_player) -> int:
+        if depth == 0 or self.is_game_over():  # game over == terminal node
             return self.get_state_value(maximizing_player)
         children_found = False
         if maximizing_player:
@@ -337,7 +382,7 @@ class GameState(object):
                             state_copy.get_all_legal_moves()
                             val = min(val, state_copy.minimax(depth - 1, True))
                             children_found = True
-            if children_found:
+            if children_found:  # no children - terminal node
                 return val
             else:
                 return self.get_state_value(maximizing_player)
