@@ -44,6 +44,7 @@ class LegalMove(object):
         if not found:
             moves.append(self)
 
+
 # Occupies [row][column] in the board. Always has a piece (color=2 for empty Cell)
 class Cell(object):
     possibleMoves: [LegalMove]  # a list of Possible moves for the piece in the Cell. Always empty for inactive player
@@ -52,72 +53,12 @@ class Cell(object):
         self.piece = Piece(color, king)  # piece is 0 for red, 1 for black, 2 for empty
         self.possibleMoves = []
 
-    def send_possible_moves_for_network(self):
-        return [{"endRow": x.endRow, "endColumn": x.endColumn, "piecesNumber": x.piecesNumber} for x in self.possibleMoves]
 
 # th main class - has board with Cells, active player's number & counter for empty moves
 class GameState(object):
     activePlayer: int  # 0 - red, 1 - black
     board: [[Cell]]  # only activePlayer can have possibleMoves non-empty. Inactive player's list is always cleared
     emptyMoves: int
-
-    def __repr__(self):
-        string = "  "
-        for i in range(8):
-            string += str(i) + " "
-        string += "\n"
-        for row in range(8):
-            string += str(row) + " "
-            for column in range(8):
-                if self.board[row][column].piece.color == 2:
-                    if row % 2 == column % 2:
-                        string += "x "
-                    else:
-                        string += "o "
-                elif self.board[row][column].piece.color == 0:
-                    if self.board[row][column].piece.king:
-                        string += "K "
-                    else:
-                        string += "R "
-                else:
-                    if self.board[row][column].piece.king:
-                        string += "Q "
-                    else:
-                        string += "B "
-            string += "\n"
-
-        return string
-
-    def send_possible_moves_for_network(self):
-        dct = dict()
-        for row in range(8):
-            for column in range(8):
-                possibleMoves =  self.board[row][column].send_possible_moves_for_network()
-                if possibleMoves:
-                    dct[(row, column)] = possibleMoves
-        return dct
-
-    def get_board_for_network(self):
-        dct = dict()
-        for row in range(8):
-            for column in range(8):
-                if self.board[row][column].piece.color == 2:
-                    if row % 2 == column % 2:
-                        # string += "x "
-                        dct[(row, column)] =  "x"
-                    else:
-                        dct[(row, column)] =  "o"
-                elif self.board[row][column].piece.color == 0:
-                    if self.board[row][column].piece.king:
-                        dct[(row, column)] =  "K"
-                    else:
-                        dct[(row, column)] =  "R"
-                else:
-                    if self.board[row][column].piece.king:
-                        dct[(row, column)] =  "Q"
-                    else:
-                        dct[(row, column)] =  "B"
-        return dct
 
     def __init__(self, board=[], empty_moves=0, active_player=0):
         self.board = board

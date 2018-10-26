@@ -56,28 +56,6 @@ def get_move_from_player(state):
     else:
         return state.get_ai_move()
 
-def get_move_from_player_for_network(possibleMoves):
-    show_moves = input("Y for show possible moves, N for input your move\n")
-    while show_moves != "N":
-        row = int(input("row: "))
-        column = int(input("column: "))
-        if (row, column) in possibleMoves:
-            for move in possibleMoves[(row, column)]:
-                print(move)
-                print('{0} {1} taking {2} pieces'.format(str(move['endRow']), str(move['endColumn']),
-                                                         str(move['piecesNumber'])))
-            show_moves = input("Y for show possible moves, N for input your move")
-    while True:
-        print("Input the piece to move: ")
-        row = int(input("row: "))
-        column = int(input("column: "))
-        print("Where moving to?")
-        row1 = int(input("row: "))
-        column1 = int(input("column: "))
-        if (row, column) in possibleMoves:
-            for move in possibleMoves[(row, column)]:
-                if move['endRow'] == row1 and move['endColumn'] == column1:
-                    return {"startRow": row, "startColumn": column, "endRow": row1, "endColumn": column1}
 
 def send_message_ui(message):
     print(message)
