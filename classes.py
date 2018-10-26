@@ -6,7 +6,7 @@ from random import randint, choice
 # lives in each Cell on the board
 class Piece(object):
     def __init__(self, color, king=False):
-        self.color = color   # 0 is red, 1 is white, 2 is Empty
+        self.color = color  # 0 is red, 1 is white, 2 is Empty
         self.king = king
 
 
@@ -44,6 +44,7 @@ class LegalMove(object):
         if not found:
             moves.append(self)
 
+
 # Occupies [row][column] in the board. Always has a piece (color=2 for empty Cell)
 class Cell(object):
     possibleMoves: [LegalMove]  # a list of Possible moves for the piece in the Cell. Always empty for inactive player
@@ -53,7 +54,9 @@ class Cell(object):
         self.possibleMoves = []
 
     def send_possible_moves_for_network(self):
-        return [{"endRow": x.endRow, "endColumn": x.endColumn, "piecesNumber": x.piecesNumber} for x in self.possibleMoves]
+        return [{"endRow": x.endRow, "endColumn": x.endColumn, "piecesNumber": x.piecesNumber} for x in
+                self.possibleMoves]
+
 
 # th main class - has board with Cells, active player's number & counter for empty moves
 class GameState(object):
@@ -92,7 +95,7 @@ class GameState(object):
         dct = dict()
         for row in range(8):
             for column in range(8):
-                possibleMoves =  self.board[row][column].send_possible_moves_for_network()
+                possibleMoves = self.board[row][column].send_possible_moves_for_network()
                 if possibleMoves:
                     dct[(row, column)] = possibleMoves
         return dct
@@ -104,19 +107,19 @@ class GameState(object):
                 if self.board[row][column].piece.color == 2:
                     if row % 2 == column % 2:
                         # string += "x "
-                        dct[(row, column)] =  "x"
+                        dct[(row, column)] = "x"
                     else:
-                        dct[(row, column)] =  "o"
+                        dct[(row, column)] = "o"
                 elif self.board[row][column].piece.color == 0:
                     if self.board[row][column].piece.king:
-                        dct[(row, column)] =  "K"
+                        dct[(row, column)] = "K"
                     else:
-                        dct[(row, column)] =  "R"
+                        dct[(row, column)] = "R"
                 else:
                     if self.board[row][column].piece.king:
-                        dct[(row, column)] =  "Q"
+                        dct[(row, column)] = "Q"
                     else:
-                        dct[(row, column)] =  "B"
+                        dct[(row, column)] = "B"
         return dct
 
     def __init__(self, board=[], empty_moves=0, active_player=0):
@@ -361,55 +364,79 @@ class GameState(object):
 
     # evaluation function for minimax - NEEDS MORE THOUGHTS ON IT
     def get_state_value(self, maximizing_player) -> int:
+        if maximizing_player:
+            max_player_number = self.activePlayer
+        else:
+            max_player_number = (self.activePlayer + 1) % 2
         if self.is_game_over():
-            if self.is_win():
-                if maximizing_player:
+            if self.is_draw():
+                return 1000  # draw is good, but not as good as a win
+            else:
+                winner = self.is_win()
+                if winner == max_player_number:
                     return sys.maxsize
                 else:
                     return -sys.maxsize - 1
-            else:
-                return 1000  # draw is good, but not as good as a win
         else:
+            if not maximizing_player:
+                self.switch_player()
+                self.get_all_legal_moves()
             max_player_kings = 0
             min_player_kings = 0
             max_player_pawns = 0
             min_player_pawns = 0
             max_player_corners = 0
+            min_player_corners = 0
             max_player_first_row = 0
+            min_player_first_row = 0
             max_player_blocked = 0
-            if maximizing_player:
-                max_player_number = self.activePlayer
+            min_player_blocked = 0
+
+            if self.activePlayer == 0:
+                max_first_row = 0
+                min_first_row = 7
             else:
-                max_player_number = (self.activePlayer + 1) % 2
-            if max_player_number == 0:
-                first_row = 0
-            else:
-                first_row = 7
+                max_first_row = 7
+                min_first_row = 0
 
             # calculate all the pieces number
             for row in range(8):
                 for column in range(8):
-                    if self.board[row][column].piece.color == max_player_number:
+                    if self.board[row][column].piece.color == self.activePlayer:
                         if self.board[row][column].piece.king:
                             max_player_kings = max_player_kings + 1
                         else:
                             max_player_pawns = max_player_pawns + 1
                         if len(self.board[row][column].possibleMoves) == 0:
-                            max_player_blocked = max_player_blocked + 1
+                            path = []
+                            self.calculate_simple_moves(row, column, path)
+                            if len(path) == 0:
+                                max_player_blocked = max_player_blocked + 1
                         if column == 0 or column == 7:
                             max_player_corners = max_player_corners + 1
-                        if row == first_row:
+                        if row == max_first_row:
                             max_player_first_row = max_player_first_row + 1
-                    else:
+                    elif self.board[row][column].piece.color != 2:
                         if self.board[row][column].piece.king:
                             min_player_kings = min_player_kings + 1
                         else:
                             min_player_pawns = min_player_pawns + 1
+                        if row == min_first_row:
+                            min_player_first_row  = min_player_first_row + 1
+                        if column == 0 or column == 7:
+                            min_player_corners = min_player_corners + 1
+                        path = []
+                        self.calculate_legal_jumps(row, column, 0, [], path)
+                        if len(path) == 0:
+                            self.calculate_simple_moves(row, column, path)
+                            if len(path) == 0:
+                                min_player_blocked = min_player_blocked + 1
 
-            payoff = 50 + 10 * (max_player_kings + max_player_pawns - min_player_pawns - min_player_kings -
-                                max_player_blocked)
+            payoff = 50 + 10 * (max_player_kings + max_player_pawns + min_player_blocked - min_player_pawns -
+                                min_player_kings - max_player_blocked)
             control = 0.087 * (max_player_kings - min_player_kings) + 0.042 * (max_player_pawns - min_player_pawns) + \
-                      0.03 * (max_player_corners + max_player_first_row)
+                0.03 * (max_player_corners - min_player_corners + max_player_first_row - min_player_first_row) - \
+                0.03*(max_player_blocked - min_player_blocked)
             terminal = 0.083
             return terminal * payoff + (1 - terminal) * ((50 + 50 * control) * 0.659 + 0.341 * payoff)
 
@@ -418,14 +445,13 @@ class GameState(object):
     def get_ai_move(self) -> LegalMove:
         cur_val, move = self.minimax_alphabeta(5, -sys.maxsize - 1, sys.maxsize, True)
         print("Moving to row " + str(move.endRow) + " column " + str(move.endColumn) + " from row " +
-               str(move.moves[0].fromRow) + " column " + str(move.moves[0].fromColumn))
+              str(move.moves[0].fromRow) + " column " + str(move.moves[0].fromColumn))
         return move
 
     # calculate value of state using minimax (no alpha-beta pruning yet - need to make sure it works as it is first)
     # based on pseudo-code from https://en.wikipedia.org/wiki/Minimax
     def minimax_alphabeta(self, depth, alpha, beta, maximizing_player) -> [int, LegalMove]:
-        game_over = self.is_game_over()
-        if depth == 0 or game_over:  # game over == terminal node
+        if depth == 0 or self.is_game_over():  # game over == terminal node
             return self.get_state_value(maximizing_player), LegalMove(0, 0, 0, [])
         move_to_return = LegalMove(0, 0, 0, [])
         if maximizing_player:

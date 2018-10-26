@@ -277,7 +277,7 @@ else:
 # red_kings_list = [[2, 4], [5, 3]]
 # black_pieces_list = [[4, 0], [5, 1], [5, 5], [6, 0]]
 # black_kings_list = [0, 6]
-
+#
 # game.board = make_empty_board()
 # for p in red_pieces_list:
 #     game.board[p[0]][p[1]] = red_simple()
