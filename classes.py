@@ -119,8 +119,8 @@ class GameState(object):
                         dct[(row, column)] =  "B"
         return dct
 
-    def __init__(self, board=[], empty_moves=0, active_player=0):
-        self.board = board
+    def __init__(self, board=None, empty_moves=0, active_player=0):
+        self.board = board if board else []
         if len(self.board) == 0:
             for row in range(8):
                 temp_row = []
