@@ -11,10 +11,21 @@ def make_empty_board():
     return board
 
 
-red_simple = lambda: Cell(0)
-red_king = lambda: Cell(0, True)
-black_simple = lambda: Cell(1)
-black_king = lambda: Cell(1, True)
+def red_simple():
+    return Cell(0)
+
+
+def red_king():
+    return Cell(0, True)
+
+
+def black_simple():
+    return Cell(1)
+
+
+def black_king():
+    return Cell(1, True)
+
 
 test_board = make_empty_board()
 
@@ -48,11 +59,11 @@ false_set = [[0, 0], [1, 5], [2, 0], [6, 2], [6, 4], [7, 3]]
 true_set = [[2, 2], [2, 4]]
 print("Testing can_jump_left")
 for case in false_set:
-    if can_jump_left(game, case[0], case[1]):
+    if game.can_jump_left(case[0], case[1]):
         print("can_jump_left failed: returned True instead of false")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 for case in true_set:
-    if not can_jump_left(game, case[0], case[1]):
+    if not game.can_jump_left(case[0], case[1]):
         print("can_jump_left failed: returned False instead of True")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 
@@ -61,11 +72,11 @@ false_set = [[0, 0], [0, 6], [2, 2], [3, 3], [6, 2], [6, 4], [7, 3]]
 true_set = [[2, 0], [2, 4]]
 print("Testing can_jump_right")
 for case in false_set:
-    if can_jump_right(game, case[0], case[1]):
+    if game.can_jump_right(case[0], case[1]):
         print("can_jump_right failed: returned True instead of false")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 for case in true_set:
-    if not can_jump_right(game, case[0], case[1]):
+    if not game.can_jump_right(case[0], case[1]):
         print("can_jump_right failed: returned False instead of True")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 
@@ -74,11 +85,11 @@ false_set = [[0, 0], [2, 2], [3, 1], [3, 3], [7, 5], [7, 7]]
 true_set = [[3, 5], [2, 6]]
 print("Testing can_jump_left_back")
 for case in false_set:
-    if can_jump_back_left(game, case[0], case[1]):
+    if game.can_jump_back_left(case[0], case[1]):
         print("can_jump_back_left failed: returned True instead of false")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 for case in true_set:
-    if not can_jump_back_left(game, case[0], case[1]):
+    if not game.can_jump_back_left(case[0], case[1]):
         print("can_jump_back_left failed: returned False instead of True")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 
@@ -87,11 +98,11 @@ false_set = [[0, 0], [2, 0], [2, 4], [7, 3], [7, 5]]
 true_set = [[3, 1], [3, 5], [7, 1]]
 print("Testing can_jump_left_back")
 for case in false_set:
-    if can_jump_back_right(game, case[0], case[1]):
+    if game.can_jump_back_right(case[0], case[1]):
         print("can_jump_back_right failed: returned True instead of false")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 for case in true_set:
-    if not can_jump_back_right(game, case[0], case[1]):
+    if not game.can_jump_back_right(case[0], case[1]):
         print("can_jump_back_right failed: returned False instead of True")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 
@@ -100,11 +111,11 @@ false_set = [[0, 0], [2, 0], [2, 2], [2, 4], [3, 1], [7, 3], [7, 5]]
 true_set = [[3, 3], [3, 5], [5, 1]]
 print("Testing can_move_left")
 for case in false_set:
-    if can_move_left(game, case[0], case[1]):
+    if game.can_move_left(case[0], case[1]):
         print("can_move_left failed: returned True instead of false")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 for case in true_set:
-    if not can_move_left(game, case[0], case[1]):
+    if not game.can_move_left(case[0], case[1]):
         print("can_move_left failed: returned False instead of True")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 
@@ -113,11 +124,11 @@ false_set = [[1, 5], [2, 0], [2, 2], [2, 4], [2, 6], [3, 1], [7, 3], [7, 5]]
 true_set = [[0, 0], [0, 6], [3, 3]]
 print("Testing can_move_right")
 for case in false_set:
-    if can_move_right(game, case[0], case[1]):
+    if game.can_move_right(case[0], case[1]):
         print("can_move_right failed: returned True instead of false")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 for case in true_set:
-    if not can_move_right(game, case[0], case[1]):
+    if not game.can_move_right(case[0], case[1]):
         print("can_move_right failed: returned False instead of True")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 
@@ -126,11 +137,11 @@ false_set = [[0, 0], [0, 6], [2, 0], [2, 6], [3, 5], [7, 3], [7, 5]]
 true_set = [[2, 2], [2, 4], [5, 1], [6, 4], [6, 6], [7, 1]]
 print("Testing can_move_back_left")
 for case in false_set:
-    if can_move_back_left(game, case[0], case[1]):
+    if game.can_move_back_left(case[0], case[1]):
         print("can_move_back_left failed: returned True instead of false")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 for case in true_set:
-    if not can_move_back_left(game, case[0], case[1]):
+    if not game.can_move_back_left(case[0], case[1]):
         print("can_move_back_left failed: returned False instead of True")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 
@@ -139,11 +150,11 @@ false_set = [[0, 0], [0, 6], [2, 0], [2, 4], [3, 1], [3, 5], [6, 2], [7, 3], [7,
 true_set = [[2, 2], [2, 6], [5, 1], [6, 4], [6, 6]]
 print("Testing can_move_back_right")
 for case in false_set:
-    if can_move_back_right(game, case[0], case[1]):
+    if game.can_move_back_right(case[0], case[1]):
         print("can_move_back_right failed: returned True instead of false")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 for case in true_set:
-    if not can_move_back_right(game, case[0], case[1]):
+    if not game.can_move_back_right(case[0], case[1]):
         print("can_move_back_right failed: returned False instead of True")
         print("Case: row " + str(case[0]) + " column " + str(case[1]))
 
@@ -153,7 +164,7 @@ moves = [LegalMove(2, 2, 5, [Move(0, 0, 0, 0)])]
 not_to_add = LegalMove(2, 2, 4, [Move(0, 0, 0, 0)])
 to_replace = LegalMove(2, 2, 6, [Move(0, 0, 0, 0)])
 to_add = LegalMove(2, 3, 6, [Move(0, 0, 0, 0)])
-append_legal_jump(moves, not_to_add)
+not_to_add.append_legal_jump(moves)
 if len(moves) > 0:
     if len(moves) != 1:
         print("append_legal_jump failed: added move that shouldn't be added")
@@ -161,7 +172,7 @@ if len(moves) > 0:
         print("append_legal_jump failed: a better move replaced with worse one")
 else:
     print("append_legal_jump failed: list length is 0, should be 1")
-append_legal_jump(moves, to_replace)
+to_replace.append_legal_jump(moves)
 if len(moves) > 0:
     if len(moves) != 1:
         print("append_legal_jump failed: added move that shouldn't be added")
@@ -169,7 +180,7 @@ if len(moves) > 0:
         print("append_legal_jump failed: a better move didn't replaced the worse one")
 else:
     print("append_legal_jump failed: list length is 0, should be 1")
-append_legal_jump(moves, to_add)
+to_add.append_legal_jump(moves)
 if len(moves) > 0:
     if len(moves) != 2:
         print("append_legal_jump failed: didn't add a move to the path")
@@ -189,7 +200,7 @@ game.board[3][5] = red_simple()
 game.board[6][2] = black_king()
 game.activePlayer = 1
 path = []
-calculate_simple_moves(game, 6, 2, path)
+game.calculate_simple_moves(6, 2, path)
 if len(path) != 4:
     print("calculate_simple_moves failed: wrong number of moves in the path")
 else:
@@ -213,7 +224,7 @@ game.board[0][0] = black_king()
 for p in red_pieces_list:
     game.board[p[0]][p[1]] = red_simple()
 move = LegalMove(2, 2, 5, [Move(0, 0, 2, 2), Move(2, 2, 4, 4), Move(4, 4, 2, 6), Move(2, 6, 0, 4), Move(0, 4, 2, 2)])
-update_game_state_with_move(game, move)
+game.update_game_state_with_move(move)
 for p in red_pieces_list:
     if game.board[p[0]][p[1]].piece.color != 2:
         print("failed update_game_state_with_move: game state was not updated - the piece was not removed")
@@ -233,7 +244,7 @@ red_pieces_list = red_pieces_list + [[5, 3]]
 for p in red_pieces_list:
     game.board[p[0]][p[1]] = red_simple()
 path = []
-calculate_legal_jumps(game, 0, 0, 0, [], path)
+game.calculate_legal_jumps(0, 0, 0, [], path)
 if len(path) != 2:
     print("failed calculate_legal_jumps: wrong number of possible jumps")
 found_first = False
@@ -248,7 +259,7 @@ if not found_first or not found_second:
 
 # test get_all_legal_moves
 print("Testing get_all_legal_moves")
-get_all_legal_moves(game)
+game.get_all_legal_moves()
 if len(game.board[0][0].possibleMoves) != 2:
     print("failed get_all_legal_moves: wrong number of moves for [0, 0]")
 else:
@@ -263,4 +274,4 @@ else:
             print("failed get_all_legal_moves: something's wrong with jump computation")
 
 
-run_game(GameState())
+run_game_state(GameState())
