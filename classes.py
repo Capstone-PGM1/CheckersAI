@@ -370,24 +370,6 @@ class GameState(object):
             else:
                 return 1000  # draw is good, but not as good as a win
         else:
-            # value = 0
-            # for row in range(8):
-            #     for column in range(8):
-            #         piece = self.board[row][column].piece
-            #         if piece.color == self.activePlayer:
-            #             value = value + 10
-            #             if piece.king:
-            #                 value = value + 5
-            #             else:
-            #                 if self.activePlayer == 0:
-            #                     dist_to_king = 7 - row
-            #                 else:
-            #                     dist_to_king = row
-            #                 if dist_to_king < 4:
-            #                     value = value + 4 - dist_to_king
-            #             if self.board[row][column].possibleMoves == 0:
-            #                 value = value - 8
-            # return value
             max_player_kings = 0
             min_player_kings = 0
             max_player_pawns = 0
@@ -457,7 +439,7 @@ class GameState(object):
                             state_copy.switch_player()
                             state_copy.get_all_legal_moves()
                             new_val, m = state_copy.minimax_alphabeta(depth - 1, val, beta, False)
-                            if val - new_val < 0:
+                            if val - new_val <= 0:
                                 val = new_val
                                 move_to_return = move
                             if beta - val < 0.001:
@@ -476,6 +458,6 @@ class GameState(object):
                             if new_val - val <= 0:
                                 val = new_val
                                 move_to_return = move
-                            if val - alpha < 0.0:
+                            if val - alpha < 0.001:
                                 return val, move_to_return
         return val, move_to_return

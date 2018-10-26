@@ -118,7 +118,7 @@ class CheckersServer(Server):
                 return
 
         # If the game is over, notify participants and delete the game.
-        if room.game.is_win():
+        if room.game.is_win() != 2:
             winningPlayer = room.is_win()
             self.sendToPlayersInGame(player, {"action": "gameEnd", "endMessage": winningPlayer})
             self.deleteGame(self.playerIdToRoom[player])
