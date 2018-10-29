@@ -57,7 +57,6 @@ class Cell(object):
                  "moves": {(y.fromRow, y.fromColumn): (y.toRow, y.toColumn) for y in x.moves}} for x in
                 self.possibleMoves]
 
-
 # th main class - has board with Cells, active player's number & counter for empty moves
 class GameState(object):
     activePlayer: int  # 0 - red, 1 - black

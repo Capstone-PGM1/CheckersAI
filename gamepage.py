@@ -1,7 +1,8 @@
 from typing import List, Any, Union, Tuple
 
-import pygame, sys, time, pygame_textinput
+import pygame, sys, time
 from tiles import *
+from classes import *
 
 pygame.init()
 pygame.font.init()
@@ -23,72 +24,56 @@ gold_outline = (216, 171, 23)
 tan_color = (242, 221, 179)
 tan_highlight = (242, 235, 222)
 
-# checker positions
-pos1 = (250, 170)
-pos2 = (410, 170)
-pos3 = (570, 170)
-pos4 = (730, 170)
-pos5 = (170, 250)
-pos6 = (330, 250)
-pos7 = (490, 250)
-pos8 = (650, 250)
-pos9 = (250, 330)
-pos10 = (410, 330)
-pos11 = (570, 330)
-pos12 = (730, 330)
-
-pos13 = (170, 570)
-pos14 = (330, 570)
-pos15 = (490, 570)
-pos16 = (650, 570)
-pos17 = (250, 650)
-pos18 = (410, 650)
-pos19 = (570, 650)
-pos20 = (730, 650)
-pos21 = (170, 730)
-pos22 = (330, 730)
-pos23 = (490, 730)
-pos24 = (650, 730)
-
 # Gameboard squares
+#
+# board1 = [210, 130]
+# board2 = [370, 130]
+# board3 = [530, 130]
+# board4 = [690, 130]
+#
+# board5 = [130, 210]
+# board6 = [290, 210]
+# board7 = [450, 210]
+# board8 = [610, 210]
+#
+# board9 = [210, 290]
+# board10 = [370, 290]
+# board11 = [530, 290]
+# board12 = [690, 290]
+#
+# board13 = [130, 370]
+# board14 = [290, 370]
+# board15 = [450, 370]
+# board16 = [610, 370]
+#
+# board17 = [210, 450]
+# board18 = [370, 450]
+# board19 = [530, 450]
+# board20 = [690, 450]
+#
+# board21 = [130, 530]
+# board22 = [290, 530]
+# board23 = [450, 530]
+# board24 = [610, 530]
+#
+# board25 = [210, 610]
+# board26 = [370, 610]
+# board27 = [530, 610]
+# board28 = [690, 610]
+#
+# board29 = [130, 690]
+# board30 = [290, 690]
+# board31 = [450, 690]
+# board32 = [610, 690]
+#
+# blackChecks = [[210 + x * 160, 130 + x * 160] for x in range(4)] + [[130 + x * 160, 210 + x * 160] for x in range(4)]
+#
+# blackChecks= [board1, board2, board3, board4, board5, board6, board7, board8, board9, board10,
+# 			  board11, board12, board13, board14, board15, board16, board17, board18, board19,
+# 			  board20, board21, board22, board23, board24, board25, board26, board27, board28,
+# 			  board29, board30, board31, board32]
 
-board1 = [210, 130]
-board2 = [370, 130]
-board3 = [530, 130]
-board4 = [690, 130]
-board5 = [130, 210]
-board6 = [290, 210]
-board7 = [450, 210]
-board8 = [610, 210]
-board9 = [210, 290]
-board10 = [370, 290]
-board11 = [530, 290]
-board12 = [690, 290]
-board13 = [130, 370]
-board14 = [290, 370]
-board15 = [450, 370]
-board16 = [610, 370]
-board17 = [210, 450]
-board18 = [370, 450]
-board19 = [530, 450]
-board20 = [690, 450]
-board21 = [130, 530]
-board22 = [290, 530]
-board23 = [450, 530]
-board24 = [610, 530]
-board25 = [210, 610]
-board26 = [370, 610]
-board27 = [530, 610]
-board28 = [690, 610]
-board29 = [130, 690]
-board30 = [290, 690]
-board31 = [450, 690]
-board32 = [610, 690]
 
-blackChecks= [board1, board2, board3, board4, board5, board6, board7, board8, board9, board10,
-			  board11, board12, board13, board14, board15, board16, board17, board18, board19,
-			  board20, board21, board22, board23, board24, board25, board26, board27, board28,
-			  board29, board30, board31, board32]
 
 # create the background
 wood = pygame.image.load("wood.jpg")
@@ -150,7 +135,7 @@ def load_grey_tiles(lower1, upper1, lower2, upper2, n):
 			upper2 += 80
 
 def load_board():
-	# draw white tiles
+	# draw grey tiles
 	draw_grid()
 
 	lower = 130
@@ -159,53 +144,53 @@ def load_board():
 	for i in range(8):
 		for x in range(lower, upper, tile_size):
 			for y in range(lower, upper , tile_size):
-				window.blit(Tiles.whiteTile, (x, y))
+				window.blit(Tiles.greyTile, (x, y))
 				pygame.draw.rect(window, black_color, (x, y, tile_size, tile_size), 1)
 			lower += 80
 			upper += 80
 
 	lower1, upper1, lower2, upper2, = 290, 370, 130, 210
-	load_white_tiles(lower1, upper1, lower2, upper2, 6)
+	load_grey_tiles(lower1, upper1, lower2, upper2, 6)
 
 	lower1, upper1, lower2, upper2, =  450, 530, 130, 210
-	load_white_tiles(lower1, upper1, lower2, upper2, 4)
+	load_grey_tiles(lower1, upper1, lower2, upper2, 4)
 
 	lower1, upper1, lower2, upper2, = 610, 692, 130, 210
-	load_white_tiles(lower1, upper1, lower2, upper2, 1)
+	load_grey_tiles(lower1, upper1, lower2, upper2, 1)
 
 	lower1, upper1, lower2, upper2, = 130, 210, 290, 370
-	load_white_tiles(lower1, upper1, lower2, upper2, 6)
+	load_grey_tiles(lower1, upper1, lower2, upper2, 6)
 
 	lower1, upper1, lower2, upper2, = 130, 210, 450, 530
-	load_white_tiles(lower1, upper1, lower2, upper2, 4)
+	load_grey_tiles(lower1, upper1, lower2, upper2, 4)
 
 	lower1, upper1, lower2, upper2, = 130, 210, 610, 690
-	load_white_tiles(lower1, upper1, lower2, upper2, 2)
+	load_grey_tiles(lower1, upper1, lower2, upper2, 2)
 
-	#draw grey tiles
+	#draw white tiles
 	lower1, upper1, lower2, upper2, = 210, 290, 130, 210
-	load_grey_tiles(lower1, upper1, lower2, upper2, 7)
+	load_white_tiles(lower1, upper1, lower2, upper2, 7)
 
 	lower1, upper1, lower2, upper2, =  370, 450, 130, 210
-	load_grey_tiles(lower1, upper1, lower2, upper2, 5)
+	load_white_tiles(lower1, upper1, lower2, upper2, 5)
 
 	lower1, upper1, lower2, upper2, = 530, 610, 130, 210
-	load_grey_tiles(lower1, upper1, lower2, upper2, 3)
+	load_white_tiles(lower1, upper1, lower2, upper2, 3)
 
 	lower1, upper1, lower2, upper2, = 690, 770, 130, 210
-	load_grey_tiles(lower1, upper1, lower2, upper2, 1)
+	load_white_tiles(lower1, upper1, lower2, upper2, 1)
 
 	lower1, upper1, lower2, upper2, = 130, 210, 210, 290
-	load_grey_tiles(lower1, upper1, lower2, upper2, 7)
+	load_white_tiles(lower1, upper1, lower2, upper2, 7)
 
 	lower1, upper1, lower2, upper2, = 130, 210, 370, 450
-	load_grey_tiles(lower1, upper1, lower2, upper2, 5)
+	load_white_tiles(lower1, upper1, lower2, upper2, 5)
 
 	lower1, upper1, lower2, upper2, = 130, 210, 530, 610
-	load_grey_tiles(lower1, upper1, lower2, upper2, 3)
+	load_white_tiles(lower1, upper1, lower2, upper2, 3)
 
 	lower1, upper1, lower2, upper2, = 130, 210, 690, 770
-	load_grey_tiles(lower1, upper1, lower2, upper2, 1)
+	load_white_tiles(lower1, upper1, lower2, upper2, 1)
 
 # game boarder
 	for x in range(110, 130, 20):
@@ -225,10 +210,6 @@ def load_board():
 			window.blit(Tiles.blackTile, (x, y))
 
 class Pieces(object):
-	def __init__(self):
-		self.r1 = pygame.draw.circle(window, red_outline, (250, 170), 37, 37)
-		self.p1 = pygame.draw.circle(window, red_color, (250, 170), 30, 30)
-
 	# def handle_mouse(self):
 	# 	for e in pygame.event.get():
 		# if e.type == pygame.QUIT:
@@ -246,105 +227,21 @@ class Pieces(object):
 	# 	self.r1 = self.r1.move(x*self.dist, y*self.dist); pygame.draw.circle(window, red_outline, (250, 170), 37, 37)
 	# 	pygame.display.update()
 
+	def draw_pieces(self, game):
+		board = game.get_board_for_network()
+		for item in board:
+			if board[item] == 'r':
+				self.draw_piece('red', item[0], item[1])
+			elif board[item] == 'b':
+				self.draw_piece('black', item[0], item[1])
 
-	def player_color(color):
-		# if player color is black
-		if (color == 1):
-			# initial red checkers
-			lower = 250
-			upper = 170
-			for i in range(4):
-				pygame.draw.circle(window, red_outline, (lower, upper), 37, 37)
-				pygame.draw.circle(window, red_color, (lower, upper), 30, 30)
-				lower += 160
-
-			lower = 170
-			upper = 250
-			for i in range(4):
-				pygame.draw.circle(window, red_outline, (lower, upper), 37, 37)
-				pygame.draw.circle(window, red_color, (lower, upper), 30, 30)
-				lower += 160
-
-			lower = 250
-			upper = 330
-			for i in range(4):
-				pygame.draw.circle(window, red_outline, (lower, upper), 37, 37)
-				pygame.draw.circle(window, red_color, (lower, upper), 30, 30)
-				lower += 160
-
-
-			# initial black checkers
-			lower = 170
-			upper = 570
-			for i in range(4):
-				pygame.draw.circle(window, black_outline, (lower, upper), 37, 37)
-				pygame.draw.circle(window, black_color, (lower, upper), 30, 30)
-				lower += 160
-
-			lower = 250
-			upper = 650
-			for i in range(4):
-				pygame.draw.circle(window, black_outline, (lower, upper), 37, 37)
-				pygame.draw.circle(window, black_color, (lower, upper), 30, 30)
-				lower += 160
-
-			lower = 170
-			upper = 730
-			for i in range(4):
-				pygame.draw.circle(window, black_outline, (lower, upper), 37, 37)
-				pygame.draw.circle(window, black_color, (lower, upper), 30, 30)
-				lower += 160
-		# if player color is red
-		else:
-
-
-			# initial red checkers
-			lower = 250
-			upper = 170
-			for i in range(4):
-				pygame.draw.circle(window, black_outline, (lower, upper), 37, 37)
-				pygame.draw.circle(window, black_color, (lower, upper), 30, 30)
-				lower += 160
-
-			lower = 170
-			upper = 250
-			for i in range(4):
-				pygame.draw.circle(window, black_outline, (lower, upper), 37, 37)
-				pygame.draw.circle(window, black_color, (lower, upper), 30, 30)
-				lower += 160
-
-			lower = 250
-			upper = 330
-			for i in range(4):
-				pygame.draw.circle(window, black_outline, (lower, upper), 37, 37)
-				pygame.draw.circle(window, black_color, (lower, upper), 30, 30)
-				lower += 160
-
-
-			# initial black checkers
-			lower = 170
-			upper = 570
-			for i in range(4):
-				pygame.draw.circle(window, red_outline, (lower, upper), 37, 37)
-				pygame.draw.circle(window, red_color, (lower, upper), 30, 30)
-				lower += 160
-
-			lower = 250
-			upper = 650
-			for i in range(4):
-				pygame.draw.circle(window, red_outline, (lower, upper), 37, 37)
-				pygame.draw.circle(window, red_color, (lower, upper), 30, 30)
-				lower += 160
-
-			lower = 170
-			upper = 730
-			for i in range(4):
-				pygame.draw.circle(window, red_outline, (lower, upper), 37, 37)
-				pygame.draw.circle(window, red_color, (lower, upper), 30, 30)
-				lower += 160
+	def draw_piece(self, piece_color, row, col):
+		outline = red_outline if piece_color == 'red' else black_outline
+		color = red_color if piece_color == 'red' else black_color
+		pygame.draw.circle(window, outline, (col * 80 + 170, row * 80 + 170), 37, 37)
+		pygame.draw.circle(window, color, (col * 80 + 170, row * 80 + 170), 30, 30)
 
 def highlight_checkers(pieces):
-
 	for i in range(len (pieces)):
 		p = pieces[i]
 		t = p[1]
@@ -417,35 +314,35 @@ def loadGamePage():
 	renderText(30, "Quit", black_color, (1115, 860))
 	# player_color(black)
 	load_chatbox(online)
-
-	gamePiece1 = [1, pos1]
-	gamePiece2 = [2, pos2]
-	gamePiece3 = [3, pos3]
-	gamePiece4 = [4, pos4]
-	gamePiece5 = [5, pos5]
-	gamePiece6 = [6, pos6]
-	gamePiece7 = [7, pos7]
-	gamePiece8 = [8, pos8]
-	gamePiece9 = [9, pos9]
-	gamePiece10 = [10, pos10]
-	gamePiece11 = [11, pos11]
-	gamePiece12 = [12, pos12]
-
-	gamePiece13 = [13, pos13]
-	gamePiece14 = [14, pos14]
-	gamePiece15 = [15, pos15]
-	gamePiece16 = [16, pos16]
-	gamePiece17 = [17, pos17]
-	gamePiece18 = [18, pos18]
-	gamePiece19 = [19, pos19]
-	gamePiece20 = [20, pos20]
-	gamePiece21 = [21, pos21]
-	gamePiece22 = [22, pos22]
-	gamePiece23 = [23, pos23]
-	gamePiece24 = [24, pos24]
-
-	validCheckers = [gamePiece13, gamePiece14, gamePiece15, gamePiece16]
-	highlight_checkers(validCheckers)
+    #
+	# gamePiece1 = [1, pos1]
+	# gamePiece2 = [2, pos2]
+	# gamePiece3 = [3, pos3]
+	# gamePiece4 = [4, pos4]
+	# gamePiece5 = [5, pos5]
+	# gamePiece6 = [6, pos6]
+	# gamePiece7 = [7, pos7]
+	# gamePiece8 = [8, pos8]
+	# gamePiece9 = [9, pos9]
+	# gamePiece10 = [10, pos10]
+	# gamePiece11 = [11, pos11]
+	# gamePiece12 = [12, pos12]
+    #
+	# gamePiece13 = [13, pos13]
+	# gamePiece14 = [14, pos14]
+	# gamePiece15 = [15, pos15]
+	# gamePiece16 = [16, pos16]
+	# gamePiece17 = [17, pos17]
+	# gamePiece18 = [18, pos18]
+	# gamePiece19 = [19, pos19]
+	# gamePiece20 = [20, pos20]
+	# gamePiece21 = [21, pos21]
+	# gamePiece22 = [22, pos22]
+	# gamePiece23 = [23, pos23]
+	# gamePiece24 = [24, pos24]
+    #
+	# validCheckers = [gamePiece13, gamePiece14, gamePiece15, gamePiece16]
+	# highlight_checkers(validCheckers)
 
 
 	# king_piece(gamePiece, pos3)
@@ -589,6 +486,7 @@ isRunning = True
 mx, my = pygame.mouse.get_pos()
 while isRunning:
 	events = pygame.event.get()
+	game = GameState()
 	for event in events:
 		if event.type == pygame.QUIT:
 			isRunning = False
@@ -607,7 +505,7 @@ while isRunning:
 
 	# Render Graphics
 	window.blit(Wood, (0, 0))
-# draw checkers board
+	# draw checkers board
 	red = 1
 	black = 0
 	crown = pygame.image.load("king.png").convert_alpha()
@@ -615,7 +513,8 @@ while isRunning:
 	# loadPlayerChoicePage()
 	loadGamePage()
 	piece = Pieces()
-	piece.player_color()
+	# piece.player_color()
+	piece.draw_pieces(game)
 
 	# loadLoginPage()
 	# loadOnePlayerPage()
