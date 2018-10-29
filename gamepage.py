@@ -1,4 +1,5 @@
-import pygame, sys, time, pygame_textinput
+import pygame, sys, time
+	# , pygame_textinput
 from tiles import *
 
 
@@ -172,8 +173,6 @@ def load_board():
 		for y in range(770, 790 , 20):
 			window.blit(Tiles.blackTile, (x, y))
 
-
-
 def player_color(color):
 	# if player color is black
 	if (color == 1):
@@ -303,7 +302,6 @@ def renderText(fontSize, message, color, position):
 	myfont = pygame.font.SysFont('Comic Sans MS', fontSize)
 	textsurface = myfont.render(message, False, color)
 	window.blit(textsurface, position)
-
 
 def loadLogo():
 	pygame.draw.circle(window, (50, 47, 47), (900, 300), 180, 180)
@@ -471,35 +469,32 @@ def loadWinPage(color):
 
 	renderText(200, "You Win!", (233, 218, 10), (300, 20))
 
-	
-create_window()
+if __name__ == "__main__":
+	create_window()
 
-isRunning = True
+	isRunning = True
 
-while isRunning:
-	events = pygame.event.get()
-	for event in events:
-		if event.type == pygame.QUIT:
-			isRunning = False
-			pygame.quit()
-			sys.exit()
+	while isRunning:
+		events = pygame.event.get()
+		for event in events:
+			if event.type == pygame.QUIT:
+				isRunning = False
+				pygame.quit()
+				sys.exit()
 
-	# Render Graphics
-	window.blit(Wood, (0, 0))
-# draw checkers board
-	red = 1
-	black = 0
-	crown = pygame.image.load("king.png").convert_alpha()
+		# Render Graphics
+		window.blit(Wood, (0, 0))
+	# draw checkers board
+		red = 1
+		black = 0
+		crown = pygame.image.load("king.png").convert_alpha()
 
-	# loadPlayerChoicePage()
-	loadGamePage()
-	# loadLoginPage()
-	# loadOnePlayerPage()
-	# loadWinPage(black)
-	# loadTwoPlayerPage()
-	# loadSettingsPage()
+		# loadPlayerChoicePage()
+		loadGamePage()
+		# loadLoginPage()
+		# loadOnePlayerPage()
+		# loadWinPage(black)
+		# loadTwoPlayerPage()
+		# loadSettingsPage()
 
-
-
-
-	pygame.display.flip()				
+		pygame.display.flip()
