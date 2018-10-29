@@ -168,21 +168,23 @@ class Pieces(object):
 		# TODO: this always shows black on the bottom of the screen.
 		for item in board:
 			is_possible = (item[0], item[1]) in possible_moves
-			color = 'red' if board[item] == 'r' else 'black'
-			if board[item] == 'r':
-				self.draw_piece(color, item[0], item[1], is_possible)
-			elif board[item] == 'b':
-				self.draw_piece('black', item[0], item[1], is_possible)
+			color = 'red' if board[item] == 'r' or board[item] == 'R' else 'black'
+			isKing = True if board[item] == 'R' or board[item] == 'B' else False
+			if board[item] != '.' and board[item] != '_':
+				self.draw_piece(color, item[0], item[1], is_possible, isKing)
 
-	def draw_piece(self, piece_color, row, col, is_possible):
+	def draw_piece(self, piece_color, row, col, is_possible, is_king):
 		outline = red_outline if piece_color == 'red' else black_outline
 		color = red_color if piece_color == 'red' else black_color
-		pygame.draw.circle(window, outline, (col * 80 + 170, row * 80 + 170), 37, 37)
-		pygame.draw.circle(window, color, (col * 80 + 170, row * 80 + 170), 30, 30)
-		# TODO: This highlighting doesnt work.
-		if is_possible:
-			pygame.draw.circle(window, light_green, (col * 80 + 170, row * 80 + 170), 38, 2)
+		yPos = row * 80 + 170
+		xPos = col * 80 + 170
+		pygame.draw.circle(window, outline, (xPos, yPos), 37, 37)
+		pygame.draw.circle(window, color, (xPos, yPos), 30, 30)
 
+		if is_possible:
+			pygame.draw.circle(window, light_green, (xPos, yPos), 38, 2)
+		if is_king:
+			window.blit(crown, (xPos - 27, yPos - 17))
 
 def highlight_checkers(pieces):
 	for i in range(len (pieces)):
@@ -460,6 +462,7 @@ def game_intro():
 
 	intro = True
 
+	# Render Graphics
 	while intro:
 		for event in pygame.event.get():
 				if event.type == pygame.QUIT:
@@ -515,42 +518,49 @@ def gameLoop():
 						print(str(initialClick[0]) + str(initialClick[1]))
 						for possibleMove in game.board[initialClick[0]][initialClick[1]].possibleMoves:
 							if row == possibleMove.endRow and col == possibleMove.endColumn:
+								print("moved from " + str(initialClick) + " to (" + str(row) + ", " + str(col) + ")")
 								made_move = True
 								game.update_game_state_with_move(possibleMove)
 								game.switch_player()
 								game.get_all_legal_moves()
+
+								if game.is_game_over():
+									if game.is_draw():
+										print("The game is a draw.")
+									else:
+										winningPlayer = 'red' if game.is_win() == 0 else 'black'
+										print("Congratulations, " + winningPlayer + " player! You won.")
+										isRunning = False
+								break
 						if not made_move:
+							print("cannot move from " + str(initialClick) + " to (" + str(row) + ", "+ str(col) + ")")
 							initialClick = None
-							print("BAD MOVE")
 
 					# Debug prints
 					if (row, col) in possible_moves:
 						initialClick = (row, col)
-					else:
-						print("row: " + str(row) + " and col: " + str(col) + " are not in the possible moves")
 					print("Click ", pos, "Grid coordinates: ", row, col)
-					# grid[row][col] = 1
 
-			pos = pygame.mouse.get_pos()
-			x = pos[0]
-			y = pos[1]
+				pos = pygame.mouse.get_pos()
+				x = pos[0]
+				y = pos[1]
 
-			for event in pygame.event.get():
+				for event in pygame.event.get():
 
-				if event.type == pygame.QUIT:
-					gameExit = True
-			# Render Graphics
-			window.blit(Wood, (0, 0))
-			# draw checkers board
-			red = 1
-			black = 0
-			crown = pygame.image.load("king.png").convert_alpha()
+					if event.type == pygame.QUIT:
+						gameExit = True
+				# Render Graphics
+				window.blit(Wood, (0, 0))
+				# draw checkers board
+				red = 1
+				black = 0
+				crown = pygame.image.load("king.png").convert_alpha()
 
-			# loadPlayerChoicePage()
-			loadGamePage()
-			piece = Pieces()
-			# piece.player_color()
-			piece.draw_pieces(game)
+				# loadPlayerChoicePage()
+				loadGamePage()
+				piece = Pieces()
+				# piece.player_color()
+				piece.draw_pieces(game)
 
 		# loadLoginPage()
 		# loadOnePlayerPage()
