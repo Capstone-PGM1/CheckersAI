@@ -27,9 +27,7 @@ class ClientChannel(Channel):
         print("closing channel")
 
     def Network_getChallenge(self, data):
-        print("In network get challenge")
         self._server.sendChallenge(data['id'], data['otherPlayer'])
-        # print(data)
 
     def Network_getResponseToChallenge(self, data):
         if data['accept']:
@@ -80,8 +78,6 @@ class CheckersServer(Server):
         room = RoomInfo(player1, player2, GameState())
         self.playerIdToRoom[player1] = room
         self.playerIdToRoom[player2] = room
-
-        print(room.player1)
 
         self.sendBoardToPlayers(player1)
 
