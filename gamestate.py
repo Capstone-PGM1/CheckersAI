@@ -1,4 +1,3 @@
-from random import seed
 from classes import *
 
 
@@ -35,14 +34,14 @@ def get_move_from_player(state):
         name = "Black"
     print(name + " player's turn")
     if state.activePlayer == 0:
-        show_moves = input("Y for show possible moves, N for input your move")
+        show_moves = input("Y for show possible moves, N for input your move... ")
         while show_moves != "N":
             row = int(input("row: "))
             column = int(input("column: "))
             for move in state.board[row][column].possibleMoves:
                 print('{0} {1} taking {2} pieces'.format(str(move.endRow), str(move.endColumn),
                                                          str(move.piecesNumber)))
-            show_moves = input("Y for show possible moves, N for input your move")
+            show_moves = input("Y for show possible moves, N for input your move... ")
         while True:
             print("Input the piece to move:")
             row = int(input("row: "))
@@ -84,7 +83,6 @@ def send_message_ui(message):
     print(message)
 
 def run_game_state(game: GameState):  # game = GameState
-    seed()  # for ai player
     game.get_all_legal_moves()
     while not game.is_game_over():
         send_game_state_to_ui(game)

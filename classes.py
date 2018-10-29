@@ -1,6 +1,5 @@
 import copy
 import sys
-from random import randint, choice
 
 
 # lives in each Cell on the board
@@ -54,7 +53,8 @@ class Cell(object):
         self.possibleMoves = []
 
     def send_possible_moves_for_network(self):
-        return [{"endRow": x.endRow, "endColumn": x.endColumn, "piecesNumber": x.piecesNumber} for x in
+        return [{"endRow": x.endRow, "endColumn": x.endColumn, "piecesNumber": x.piecesNumber,
+                 "moves": {(y.fromRow, y.fromColumn): (y.toRow, y.toColumn) for y in x.moves}} for x in
                 self.possibleMoves]
 
 
@@ -432,8 +432,8 @@ class GameState(object):
                             if len(path) == 0:
                                 min_player_blocked = min_player_blocked + 1
 
-            payoff = 50 + 10 * (max_player_kings + max_player_pawns + min_player_blocked - min_player_pawns -
-                                min_player_kings - max_player_blocked)
+            payoff = 50 + 10 * (max_player_kings + max_player_pawns - min_player_pawns -
+                                min_player_kings)
             control = 0.087 * (max_player_kings - min_player_kings) + 0.042 * (max_player_pawns - min_player_pawns) + \
                 0.03 * (max_player_corners - min_player_corners + max_player_first_row - min_player_first_row) - \
                 0.03*(max_player_blocked - min_player_blocked)
@@ -443,7 +443,7 @@ class GameState(object):
     # get ai move for 1-player game. Currently calling for minimax algo to find out best move
     # if several moves has same value, use random number to select one of those
     def get_ai_move(self) -> LegalMove:
-        cur_val, move = self.minimax_alphabeta(5, -sys.maxsize - 1, sys.maxsize, True)
+        cur_val, move = self.minimax_alphabeta(5, -sys.maxsize - 1, sys.maxsize, False)
         print("Moving to row " + str(move.endRow) + " column " + str(move.endColumn) + " from row " +
               str(move.moves[0].fromRow) + " column " + str(move.moves[0].fromColumn))
         return move
@@ -455,7 +455,7 @@ class GameState(object):
             return self.get_state_value(maximizing_player), LegalMove(0, 0, 0, [])
         move_to_return = LegalMove(0, 0, 0, [])
         if maximizing_player:
-            val = alpha
+            val = -sys.maxsize - 1
             for row in range(8):
                 for column in range(8):
                     if self.board[row][column].piece.color == self.activePlayer:
@@ -464,14 +464,18 @@ class GameState(object):
                             state_copy.update_game_state_with_move(move)
                             state_copy.switch_player()
                             state_copy.get_all_legal_moves()
-                            new_val, m = state_copy.minimax_alphabeta(depth - 1, val, beta, False)
-                            if val - new_val <= 0:
+                            new_val, m = state_copy.minimax_alphabeta(depth - 1, alpha, beta, False)
+                            if new_val > val:
                                 val = new_val
                                 move_to_return = move
-                            if beta - val < 0.001:
-                                return val, move_to_return
+                            if beta <= val:
+                                return new_val, move
+                            if alpha < val:
+                                alpha = val
+                                move_to_return = move
+            return val, move_to_return
         else:  # (*minimizing player *)
-            val = beta
+            val = sys.maxsize
             for row in range(8):
                 for column in range(8):
                     if self.board[row][column].piece.color == self.activePlayer:
@@ -481,9 +485,12 @@ class GameState(object):
                             state_copy.switch_player()
                             state_copy.get_all_legal_moves()
                             new_val, m = state_copy.minimax_alphabeta(depth - 1, alpha, val, True)
-                            if new_val - val <= 0:
+                            if new_val < val:
                                 val = new_val
                                 move_to_return = move
-                            if val - alpha < 0.001:
+                            if val <= alpha:
                                 return val, move_to_return
-        return val, move_to_return
+                            if val < beta:
+                                beta = val
+                                move_to_return = move
+            return val, move_to_return
