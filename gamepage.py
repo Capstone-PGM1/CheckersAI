@@ -358,7 +358,7 @@ def loadTwoPlayerPage():
 		window.blit(Wood, (0, 0))
 		pygame.draw.rect(window, tan_color, [200, 50, 800, 200])
 		renderText(150, "New Game", black_color, (340, 100))
-		button("LocalGame", 200, 300, 300, 60, tan_color, tan_highlight, 'LocalGame')
+		button("LocalGame", 200, 300, 300, 60, tan_color, tan_highlight, 'main')
 		renderText(60, "Local Game", black_color, (230, 310))
 		button("PlayOnline", 700, 300, 300, 60, tan_color, tan_highlight, 'PlayOnline')
 		renderText(60, "Play Online", black_color, (740, 310))
@@ -586,7 +586,3 @@ if __name__ == '__main__':
 	game_intro()
 
 	gameLoop()
-
-
-
-		# clock.tick(60)
