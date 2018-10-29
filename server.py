@@ -59,17 +59,11 @@ class CheckersServer(Server):
         channel.Send({"action": "receiveId", "id": playerId})
         self.sendPlayers()
 
-        # # Temporary way to start the game -- if the second client connects, then start the game.
-        # if playerId == 1:
-        #     self.startGame(0, playerId)
-
     # These methods have to do with connecting the game for many players.
     def sendPlayers(self):
         # send something to both players in the game.
         for playerId, channel in self.playerIdToPlayerChannel.items():
-            print(playerId)
             if playerId not in self.playerIdToRoom:
-                print("sending getPlayers")
                 x = list(map(lambda y: str(y), filter(lambda x: x not in self.playerIdToRoom, self.playerIdToPlayerChannel.keys())))
                 channel.Send({"action": "getPlayers", "players": x})
 

@@ -74,7 +74,7 @@ class GameState(object):
             for column in range(8):
                 if self.board[row][column].piece.color == 2:
                     if row % 2 == column % 2:
-                        string += "x "
+                        string += ". "
                     else:
                         string += "o "
                 elif self.board[row][column].piece.color == 0:
@@ -107,21 +107,24 @@ class GameState(object):
                 if self.board[row][column].piece.color == 2:
                     if row % 2 == column % 2:
                         # string += "x "
-                        dct[(row, column)] = "x"
+                        dct[(row, column)] = "_"
                     else:
-                        dct[(row, column)] = "o"
+                        dct[(row, column)] = "."
                 elif self.board[row][column].piece.color == 0:
                     if self.board[row][column].piece.king:
-                        dct[(row, column)] = "K"
-                    else:
                         dct[(row, column)] = "R"
+                    else:
+                        dct[(row, column)] = "r"
                 else:
                     if self.board[row][column].piece.king:
-                        dct[(row, column)] = "Q"
-                    else:
                         dct[(row, column)] = "B"
+                    else:
+                        dct[(row, column)] = "b"
         return dct
 
+    # Initializing to empty array doesn't work well in Python: https://docs.python-guide.org/writing/gotchas/
+    # The first time, it works okay. The second time, that empty array has been mutated, and it
+    # becomes something else.
     def __init__(self, board=None, empty_moves=0, active_player=0):
         self.board = board if board else []
         if len(self.board) == 0:
