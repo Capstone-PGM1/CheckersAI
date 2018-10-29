@@ -111,7 +111,7 @@ class CheckersServer(Server):
             return
 
         for possibleMove in room.game.board[move['startRow']][move['startColumn']].possibleMoves:
-            if move['endRow'] == possibleMove.endRow and move['endRow'] == possibleMove.endRow:
+            if move['endCol'] == possibleMove.endColumn and move['endRow'] == possibleMove.endRow:
                 room.game.update_game_state_with_move(possibleMove)
                 room.game.switch_player()
                 room.game.get_all_legal_moves()

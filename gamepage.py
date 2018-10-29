@@ -229,17 +229,25 @@ class Pieces(object):
 
 	def draw_pieces(self, game):
 		board = game.get_board_for_network()
+		possible_moves = game.send_possible_moves_for_network()
+		# TODO: this always shows black on the bottom of the screen.
 		for item in board:
+			is_possible = (item[0], item[1]) in possible_moves
+			color = 'red' if board[item] == 'r' else 'black'
 			if board[item] == 'r':
-				self.draw_piece('red', item[0], item[1])
+				self.draw_piece(color, item[0], item[1], is_possible)
 			elif board[item] == 'b':
-				self.draw_piece('black', item[0], item[1])
+				self.draw_piece('black', item[0], item[1], is_possible)
 
-	def draw_piece(self, piece_color, row, col):
+	def draw_piece(self, piece_color, row, col, is_possible):
 		outline = red_outline if piece_color == 'red' else black_outline
 		color = red_color if piece_color == 'red' else black_color
 		pygame.draw.circle(window, outline, (col * 80 + 170, row * 80 + 170), 37, 37)
 		pygame.draw.circle(window, color, (col * 80 + 170, row * 80 + 170), 30, 30)
+		# TODO: This highlighting doesnt work.
+		if is_possible:
+			pygame.draw.circle(window, light_green, (col * 80 + 170, row * 80 + 170), 38, 2)
+
 
 def highlight_checkers(pieces):
 	for i in range(len (pieces)):
@@ -479,59 +487,81 @@ def loadSettingsPage():
 	pygame.draw.circle(window, black_outline, (670, 770), 60, 60)
 	pygame.draw.circle(window, black_color, (670, 770), 50, 50)
 
+if __name__ == '__main__':
 
-create_window()
+	create_window()
 
-isRunning = True
-mx, my = pygame.mouse.get_pos()
-while isRunning:
-	events = pygame.event.get()
+	isRunning = True
+	mx, my = pygame.mouse.get_pos()
+	initialClick = None
 	game = GameState()
-	for event in events:
-		if event.type == pygame.QUIT:
-			isRunning = False
-			pygame.quit()
-			sys.exit()
-		elif event.type == pygame.MOUSEBUTTONDOWN:
-			col = (pos[0] - 50)// 80
-			row = (pos[1] - 50) // 80
-			# Debug prints
-			print("Click ", pos, "Grid coordinates: ", row, col)
-			# grid[row][col] = 1
+	game.get_all_legal_moves()
+	while isRunning:
+		possible_moves = game.send_possible_moves_for_network()
+		events = pygame.event.get()
+		for event in events:
+			if event.type == pygame.QUIT:
+				isRunning = False
+				pygame.quit()
+				sys.exit()
+			elif event.type == pygame.MOUSEBUTTONDOWN:
+				col = ((pos[0] - 50)// 80) - 1
+				row = ((pos[1] - 50) // 80) - 1
 
-	pos = pygame.mouse.get_pos()
-	x = pos[0]
-	y = pos[1]
+				if initialClick:
+					made_move = False
+					print(str(initialClick[0]) + str(initialClick[1]))
+					for possibleMove in game.board[initialClick[0]][initialClick[1]].possibleMoves:
+						if row == possibleMove.endRow and col == possibleMove.endColumn:
+							made_move = True
+							game.update_game_state_with_move(possibleMove)
+							game.switch_player()
+							game.get_all_legal_moves()
+					if not made_move:
+						initialClick = None
+						print("BAD MOVE")
 
-	# Render Graphics
-	window.blit(Wood, (0, 0))
-	# draw checkers board
-	red = 1
-	black = 0
-	crown = pygame.image.load("king.png").convert_alpha()
+				# Debug prints
+				if (row, col) in possible_moves:
+					initialClick = (row, col)
+				else:
+					print("row: " + str(row) + " and col: " + str(col) + " are not in the possible moves")
+				print("Click ", pos, "Grid coordinates: ", row, col)
+				# grid[row][col] = 1
 
-	# loadPlayerChoicePage()
-	loadGamePage()
-	piece = Pieces()
-	# piece.player_color()
-	piece.draw_pieces(game)
+		pos = pygame.mouse.get_pos()
+		x = pos[0]
+		y = pos[1]
 
-	# loadLoginPage()
-	# loadOnePlayerPage()
-	# loadWinPage(red)
-	# loadTwoPlayerPage()
-	# loadSettingsPage()
-	# pieces =[[250, 330]]
-	# highlight_checkers(pieces)
-	# availableMoves = [[130, 210]]
-	# highlight_available_moves(availableMoves)
-	# mouse_pressed()
-	# highlight_available_moves(blackChecks)
+		# Render Graphics
+		window.blit(Wood, (0, 0))
+		# draw checkers board
+		red = 1
+		black = 0
+		crown = pygame.image.load("king.png").convert_alpha()
+
+		# loadPlayerChoicePage()
+		loadGamePage()
+		piece = Pieces()
+		# piece.player_color()
+		piece.draw_pieces(game)
+
+		# loadLoginPage()
+		# loadOnePlayerPage()
+		# loadWinPage(red)
+		# loadTwoPlayerPage()
+		# loadSettingsPage()
+		# pieces =[[250, 330]]
+		# highlight_checkers(pieces)
+		# availableMoves = [[130, 210]]
+		# highlight_available_moves(availableMoves)
+		# mouse_pressed()
+		# highlight_available_moves(blackChecks)
 
 
 
-	pygame.display.flip()
+		pygame.display.flip()
 
 
 
-	# clock.tick(60)
+		# clock.tick(60)
