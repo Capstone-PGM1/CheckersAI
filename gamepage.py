@@ -1,11 +1,11 @@
-from typing import List, Any, Union, Tuple
-
 import pygame, sys, time
 from tiles import *
 from classes import *
 
 pygame.init()
 pygame.font.init()
+
+window = pygame.display.set_mode((1200,900))
 
 clock = pygame.time.Clock()
 currSec = 0
@@ -23,55 +23,6 @@ gold_color = (233, 218, 10)
 gold_outline = (216, 171, 23)
 tan_color = (242, 221, 179)
 tan_highlight = (242, 235, 222)
-
-# Gameboard squares
-#
-# board1 = [210, 130]
-# board2 = [370, 130]
-# board3 = [530, 130]
-# board4 = [690, 130]
-#
-# board5 = [130, 210]
-# board6 = [290, 210]
-# board7 = [450, 210]
-# board8 = [610, 210]
-#
-# board9 = [210, 290]
-# board10 = [370, 290]
-# board11 = [530, 290]
-# board12 = [690, 290]
-#
-# board13 = [130, 370]
-# board14 = [290, 370]
-# board15 = [450, 370]
-# board16 = [610, 370]
-#
-# board17 = [210, 450]
-# board18 = [370, 450]
-# board19 = [530, 450]
-# board20 = [690, 450]
-#
-# board21 = [130, 530]
-# board22 = [290, 530]
-# board23 = [450, 530]
-# board24 = [610, 530]
-#
-# board25 = [210, 610]
-# board26 = [370, 610]
-# board27 = [530, 610]
-# board28 = [690, 610]
-#
-# board29 = [130, 690]
-# board30 = [290, 690]
-# board31 = [450, 690]
-# board32 = [610, 690]
-#
-# blackChecks = [[210 + x * 160, 130 + x * 160] for x in range(4)] + [[130 + x * 160, 210 + x * 160] for x in range(4)]
-#
-# blackChecks= [board1, board2, board3, board4, board5, board6, board7, board8, board9, board10,
-# 			  board11, board12, board13, board14, board15, board16, board17, board18, board19,
-# 			  board20, board21, board22, board23, board24, board25, board26, board27, board28,
-# 			  board29, board30, board31, board32]
 
 
 
@@ -210,22 +161,6 @@ def load_board():
 			window.blit(Tiles.blackTile, (x, y))
 
 class Pieces(object):
-	# def handle_mouse(self):
-	# 	for e in pygame.event.get():
-		# if e.type == pygame.QUIT:
-		# 	isRunning = False
-		# 	pygame.quit()
-		# 	sys.exit()
-		# elif e.type == pygame.MOUSEBUTTONDOWN:
-		# 	col = (pos[0] - 50)// 80
-		# 	row = (pos[1] - 50) // 80
-		# 	# Debug prints
-		# 	print("Click ", pos, "Grid coordinates: ", row, col)
-		# 	# grid[row][col] = 1
-	#
-	# def move_piece(self, x, y):
-	# 	self.r1 = self.r1.move(x*self.dist, y*self.dist); pygame.draw.circle(window, red_outline, (250, 170), 37, 37)
-	# 	pygame.display.update()
 
 	def draw_pieces(self, game):
 		board = game.get_board_for_network()
@@ -278,8 +213,7 @@ def king_piece(gamePiece, position):
 	xPos, yPos = position
 	window.blit(crown, (xPos - 27, yPos - 17))
 
-# https://pythonprogramming.net/pygame-button-function/
-def button(msg, x, y, w, h, ic, ac, action):
+def button(msg, x, y, w, h, ic, ac, action = None):
 	cur = pygame.mouse.get_pos()
 	click = pygame.mouse.get_pressed()
 	if x + w > cur[0] > x and y + h > cur[1] > y:
@@ -288,6 +222,35 @@ def button(msg, x, y, w, h, ic, ac, action):
 			if action == "quit":
 				pygame.quit()
 				sys.exit()
+			if action == "player1":
+				loadOnePlayerPage()
+
+			if action == "player2":
+				loadTwoPlayerPage()
+
+			if action == "settings":
+				loadSettingsPage()
+
+			if action == "PlayOnline":
+				pass
+
+			if action == "LocalGame":
+				pass
+
+			if action == "p1":
+				pass
+
+			if action == "p2":
+				pass
+
+			if action == "play":
+				gameLoop()
+
+			if action == "main":
+				gameLoop()
+
+			if action == "home":
+				game_intro()
 	else:
 		pygame.draw.rect(window, ic, (x, y, w, h))
 	# text_to_button(text, black, x, y, w, h)
@@ -316,59 +279,30 @@ def loadGamePage():
 	online = 1
 	offline = 0
 	load_board()
-	button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'quit')
+	button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'settings')
 	renderText(30, "Settings", black_color, (1100, 30))
 	button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
 	renderText(30, "Quit", black_color, (1115, 860))
 	# player_color(black)
 	load_chatbox(online)
-    #
-	# gamePiece1 = [1, pos1]
-	# gamePiece2 = [2, pos2]
-	# gamePiece3 = [3, pos3]
-	# gamePiece4 = [4, pos4]
-	# gamePiece5 = [5, pos5]
-	# gamePiece6 = [6, pos6]
-	# gamePiece7 = [7, pos7]
-	# gamePiece8 = [8, pos8]
-	# gamePiece9 = [9, pos9]
-	# gamePiece10 = [10, pos10]
-	# gamePiece11 = [11, pos11]
-	# gamePiece12 = [12, pos12]
-    #
-	# gamePiece13 = [13, pos13]
-	# gamePiece14 = [14, pos14]
-	# gamePiece15 = [15, pos15]
-	# gamePiece16 = [16, pos16]
-	# gamePiece17 = [17, pos17]
-	# gamePiece18 = [18, pos18]
-	# gamePiece19 = [19, pos19]
-	# gamePiece20 = [20, pos20]
-	# gamePiece21 = [21, pos21]
-	# gamePiece22 = [22, pos22]
-	# gamePiece23 = [23, pos23]
-	# gamePiece24 = [24, pos24]
-    #
-	# validCheckers = [gamePiece13, gamePiece14, gamePiece15, gamePiece16]
-	# highlight_checkers(validCheckers)
 
 
 	# king_piece(gamePiece, pos3)
 
 def loadPlayerChoicePage():
 	loadLogo()
-	button("player1", 250, 600, 300, 60, tan_color, tan_highlight, 'quit')
+	button("player1", 250, 600, 300, 60, tan_color, tan_highlight, 'player1')
 	renderText(60, "1-Player", black_color, (320, 610))
-	button("player2", 650, 600, 300, 60, tan_color, tan_highlight, 'quit')
+	button("player2", 650, 600, 300, 60, tan_color, tan_highlight, 'player2')
 	renderText(60, "2-Player", black_color, (720, 610))
 	button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
 	renderText(30, "Quit", black_color, (1115, 860))
-	button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'quit')
+	button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'settings')
 	renderText(30, "Settings", black_color, (1100, 30))
 
 def loadLoginPage():
 	loadLogo()
-	button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'quit')
+	button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'settings')
 	renderText(30, "Settings", black_color, (1100, 30))
 	button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
 	renderText(30, "Quit", black_color, (1115, 860))
@@ -378,45 +312,67 @@ def loadLoginPage():
 	renderText(30, "Password", black_color, (450, 660))
 
 def loadOnePlayerPage():
-	pygame.draw.rect(window, tan_color, [200, 50, 800, 200])
-	renderText(150, "New Game", black_color, (340, 100))
-	button("easy", 450, 300, 300, 60, tan_color, tan_highlight, 'quit')
-	renderText(60, "Easy", black_color, (545, 310))
-	button("medium", 450, 410, 300, 60, tan_color, tan_highlight, 'quit')
-	renderText(60, "Medium", black_color, (520, 420))
-	button("hard", 450, 520, 300, 60, tan_color, tan_highlight, 'quit')
-	renderText(60, "Hard", black_color, (545, 530))
+	gcont = True
 
-	renderText(60, "Select color", black_color, (480, 650))
+	while gcont:
+		for event in pygame.event.get():
+				#print(event)
+				if event.type == pygame.QUIT:
+					pygame.quit()
+					quit()
+		window.blit(Wood, (0, 0))
+		pygame.draw.rect(window, tan_color, [200, 50, 800, 200])
+		renderText(150, "New Game", black_color, (340, 100))
+		button("easy", 450, 300, 300, 60, tan_color, tan_highlight, 'main')
+		renderText(60, "Easy", black_color, (545, 310))
+		button("medium", 450, 410, 300, 60, tan_color, tan_highlight, 'main')
+		renderText(60, "Medium", black_color, (520, 420))
+		button("hard", 450, 520, 300, 60, tan_color, tan_highlight, 'main')
+		renderText(60, "Hard", black_color, (545, 530))
 
-	pygame.draw.circle(window, red_outline, (530, 770), 60, 60)
-	pygame.draw.circle(window, red_color, (530, 770), 50, 50)
-	pygame.draw.circle(window, black_outline, (670, 770), 60, 60)
-	pygame.draw.circle(window, black_color, (670, 770), 50, 50)
+		renderText(60, "Select color", black_color, (480, 650))
 
-	button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'quit')
-	renderText(30, "Settings", black_color, (1100, 30))
-	button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
-	renderText(30, "Quit", black_color, (1115, 860))
+		pygame.draw.circle(window, red_outline, (530, 770), 60, 60)
+		pygame.draw.circle(window, red_color, (530, 770), 50, 50)
+		pygame.draw.circle(window, black_outline, (670, 770), 60, 60)
+		pygame.draw.circle(window, black_color, (670, 770), 50, 50)
+
+		button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'settings')
+		renderText(30, "Settings", black_color, (1100, 30))
+		button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
+		renderText(30, "Quit", black_color, (1115, 860))
+		pygame.display.update()
+		clock.tick(15)
 
 def loadTwoPlayerPage():
-	pygame.draw.rect(window, tan_color, [200, 50, 800, 200])
-	renderText(150, "New Game", black_color, (340, 100))
-	button("LocalGame", 200, 300, 300, 60, tan_color, tan_highlight, 'quit')
-	renderText(60, "Local Game", black_color, (230, 310))
-	button("PlayOnline", 700, 300, 300, 60, tan_color, tan_highlight, 'quit')
-	renderText(60, "Play Online", black_color, (740, 310))
-	button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
-	renderText(30, "Quit", black_color, (1115, 860))
-	button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'quit')
-	renderText(30, "Settings", black_color, (1100, 30))
+	gcont = True
 
-	pygame.draw.rect(window, tan_color, [700, 400, 300, 250])
+	while gcont:
+		for event in pygame.event.get():
+				#print(event)
+				if event.type == pygame.QUIT:
+					pygame.quit()
+					quit()
+		window.blit(Wood, (0, 0))
+		pygame.draw.rect(window, tan_color, [200, 50, 800, 200])
+		renderText(150, "New Game", black_color, (340, 100))
+		button("LocalGame", 200, 300, 300, 60, tan_color, tan_highlight, 'LocalGame')
+		renderText(60, "Local Game", black_color, (230, 310))
+		button("PlayOnline", 700, 300, 300, 60, tan_color, tan_highlight, 'PlayOnline')
+		renderText(60, "Play Online", black_color, (740, 310))
+		button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
+		renderText(30, "Quit", black_color, (1115, 860))
+		button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'settings')
+		renderText(30, "Settings", black_color, (1100, 30))
 
-	button("player1", 420, 800, 150, 40, tan_color, tan_highlight, 'quit')
-	renderText(40, "Accept", black_color, (450, 805))
-	button("player2", 630, 800, 150, 40, tan_color, tan_highlight, 'quit')
-	renderText(40, "Decline", black_color, (655, 805))
+		pygame.draw.rect(window, tan_color, [700, 400, 300, 250])
+
+		button("player1", 420, 800, 150, 40, tan_color, tan_highlight, 'p1')
+		renderText(40, "Accept", black_color, (450, 805))
+		button("player2", 630, 800, 150, 40, tan_color, tan_highlight, 'p2')
+		renderText(40, "Decline", black_color, (655, 805))
+		pygame.display.update()
+		clock.tick(15)
 
 def loadWinPage(color):
 	move = 80
@@ -477,74 +433,124 @@ def loadWinPage(color):
 
 
 def loadSettingsPage():
-	pygame.draw.rect(window, tan_color, [200, 50, 800, 200])
-	renderText(150, "Settings", black_color, (340, 100))
+	gcont = True
 
-	renderText(60, "Prefered color", black_color, (470, 650))
-
-	pygame.draw.circle(window, red_outline, (530, 770), 60, 60)
-	pygame.draw.circle(window, red_color, (530, 770), 50, 50)
-	pygame.draw.circle(window, black_outline, (670, 770), 60, 60)
-	pygame.draw.circle(window, black_color, (670, 770), 50, 50)
-
-if __name__ == '__main__':
-
-	create_window()
-
-	isRunning = True
-	mx, my = pygame.mouse.get_pos()
-	initialClick = None
-	game = GameState()
-	game.get_all_legal_moves()
-	while isRunning:
-		possible_moves = game.send_possible_moves_for_network()
-		events = pygame.event.get()
-		for event in events:
-			if event.type == pygame.QUIT:
-				isRunning = False
-				pygame.quit()
-				sys.exit()
-			elif event.type == pygame.MOUSEBUTTONDOWN:
-				col = ((pos[0] - 50)// 80) - 1
-				row = ((pos[1] - 50) // 80) - 1
-
-				if initialClick:
-					made_move = False
-					print(str(initialClick[0]) + str(initialClick[1]))
-					for possibleMove in game.board[initialClick[0]][initialClick[1]].possibleMoves:
-						if row == possibleMove.endRow and col == possibleMove.endColumn:
-							made_move = True
-							game.update_game_state_with_move(possibleMove)
-							game.switch_player()
-							game.get_all_legal_moves()
-					if not made_move:
-						initialClick = None
-						print("BAD MOVE")
-
-				# Debug prints
-				if (row, col) in possible_moves:
-					initialClick = (row, col)
-				else:
-					print("row: " + str(row) + " and col: " + str(col) + " are not in the possible moves")
-				print("Click ", pos, "Grid coordinates: ", row, col)
-				# grid[row][col] = 1
-
-		pos = pygame.mouse.get_pos()
-		x = pos[0]
-		y = pos[1]
-
-		# Render Graphics
+	while gcont:
+		for event in pygame.event.get():
+				#print(event)
+				if event.type == pygame.QUIT:
+					pygame.quit()
+					quit()
 		window.blit(Wood, (0, 0))
-		# draw checkers board
-		red = 1
-		black = 0
-		crown = pygame.image.load("king.png").convert_alpha()
+		pygame.draw.rect(window, tan_color, [200, 50, 800, 200])
+		renderText(150, "Settings", black_color, (340, 100))
+		renderText(60, "Prefered color", black_color, (470, 650))
 
-		# loadPlayerChoicePage()
-		loadGamePage()
-		piece = Pieces()
-		# piece.player_color()
-		piece.draw_pieces(game)
+		button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
+		renderText(30, "Quit", black_color, (1115, 860))
+
+		pygame.draw.circle(window, red_outline, (530, 770), 60, 60)
+		pygame.draw.circle(window, red_color, (530, 770), 50, 50)
+		pygame.draw.circle(window, black_outline, (670, 770), 60, 60)
+		pygame.draw.circle(window, black_color, (670, 770), 50, 50)
+		pygame.display.update()
+		clock.tick(15)
+
+def game_intro():
+
+	intro = True
+
+	while intro:
+		for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					pygame.quit()
+					quit()
+
+				if event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_c:
+						intro = False
+					elif event.key == pygame.K_q:
+
+						pygame.quit()
+						quit()
+		window.blit(Wood, (0, 0))
+
+
+		loadLogo()
+		loadPlayerChoicePage()
+
+
+		pygame.display.update()
+
+		clock.tick(15)
+
+# if __name__ == '__main__':
+
+def gameLoop():
+	gameExit = False
+	gameOver = False
+	FPS = 15
+
+	while not gameExit:
+
+		isRunning = True
+		# mx, my = pygame.mouse.get_pos()
+		initialClick = None
+		game = GameState()
+		game.get_all_legal_moves()
+		while isRunning:
+			possible_moves = game.send_possible_moves_for_network()
+			events = pygame.event.get()
+			for event in events:
+				if event.type == pygame.QUIT:
+					isRunning = False
+					pygame.quit()
+					sys.exit()
+				elif event.type == pygame.MOUSEBUTTONDOWN:
+					col = ((pos[0] - 50)// 80) - 1
+					row = ((pos[1] - 50) // 80) - 1
+
+					if initialClick:
+						made_move = False
+						print(str(initialClick[0]) + str(initialClick[1]))
+						for possibleMove in game.board[initialClick[0]][initialClick[1]].possibleMoves:
+							if row == possibleMove.endRow and col == possibleMove.endColumn:
+								made_move = True
+								game.update_game_state_with_move(possibleMove)
+								game.switch_player()
+								game.get_all_legal_moves()
+						if not made_move:
+							initialClick = None
+							print("BAD MOVE")
+
+					# Debug prints
+					if (row, col) in possible_moves:
+						initialClick = (row, col)
+					else:
+						print("row: " + str(row) + " and col: " + str(col) + " are not in the possible moves")
+					print("Click ", pos, "Grid coordinates: ", row, col)
+					# grid[row][col] = 1
+
+			pos = pygame.mouse.get_pos()
+			x = pos[0]
+			y = pos[1]
+
+			for event in pygame.event.get():
+
+				if event.type == pygame.QUIT:
+					gameExit = True
+			# Render Graphics
+			window.blit(Wood, (0, 0))
+			# draw checkers board
+			red = 1
+			black = 0
+			crown = pygame.image.load("king.png").convert_alpha()
+
+			# loadPlayerChoicePage()
+			loadGamePage()
+			piece = Pieces()
+			# piece.player_color()
+			piece.draw_pieces(game)
 
 		# loadLoginPage()
 		# loadOnePlayerPage()
@@ -560,8 +566,13 @@ if __name__ == '__main__':
 
 
 
-		pygame.display.flip()
+			pygame.display.flip()
+			clock.tick(FPS)
+	pygame.quit()
+	quit()
 
+if __name__ == '__main__':
 
+	game_intro()
 
-		# clock.tick(60)
+	gameLoop()
