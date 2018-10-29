@@ -50,9 +50,10 @@ def get_move_from_player(state):
             print("Where moving to?")
             row1 = int(input("row: "))
             column1 = int(input("column: "))
-            for move in state.board[row][column].possibleMoves:
-                if move.endRow == row1 and move.endColumn == column1:
-                    return move
+            if -1 < row < 8 and -1 < column < 8 and -1 < row1 < 8 and -1 < column1 < 8:
+               for move in state.board[row][column].possibleMoves:
+                 if move.endRow == row1 and move.endColumn == column1:
+                        return move
     else:
         return state.get_ai_move()
 
@@ -91,10 +92,11 @@ def run_game_state(game: GameState):  # game = GameState
         game.update_game_state_with_move(move)
         game.switch_player()
         game.get_all_legal_moves()
+    send_game_state_to_ui(game)
     if game.is_draw():
         send_message_ui("It's a draw")
-    elif game.is_win():
-        if game.activePlayer == 0:
+    else:
+        if game.is_win() == 1:
             name = "Black"
         else:
             name = "Red"

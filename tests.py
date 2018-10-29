@@ -273,5 +273,23 @@ else:
         if move.piecesNumber != 0:
             print("failed get_all_legal_moves: something's wrong with jump computation")
 
+# red_pieces_list = [[0, 2], [2, 2], [2, 6], [3, 1], [3, 3], [4, 2]]
+# red_kings_list = [[2, 4], [5, 3]]
+# black_pieces_list = [[4, 0], [5, 1], [5, 5], [6, 0]]
+# black_kings_list = [0, 6]
+#
+# game.board = make_empty_board()
+# for p in red_pieces_list:
+#     game.board[p[0]][p[1]] = red_simple()
+# for piece in red_kings_list:
+#     game.board[piece[0]][piece[1]] = red_king()
+# for piece in black_pieces_list:
+#     game.board[piece[0]][piece[1]] = black_simple()
+# game.board[0][6] = black_king()
+# game.activePlayer = 1
+# run_game_state(game)
+
+
+
 
 run_game_state(GameState())
