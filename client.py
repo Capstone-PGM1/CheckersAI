@@ -36,11 +36,23 @@ class Client(ConnectionListener):
     # When the server sends the list of players, display possible
     # players on the screen
     def Network_getPlayers(self, data):
-        print("Available Players: " + ', '.join(data['players']))
+        playersOtherThanSelf = list(filter(lambda x: x != str(self.id), data['players']))
+        print("Available Players: " + ', '.join(playersOtherThanSelf))
+        challenge = input("Do you want to challenge a player? Y/N\n")
+        if challenge == "Y" or challenge == "y":
+            otherPlayer = input("Who do you want to challenge?\n")
+
+            connection.Send({"action": "getChallenge", "id": self.id, "otherPlayer": int(otherPlayer)})
 
     # When receiving a challenge from another player, display the challenger on the screen
     def Network_getChallenge(self, data):
-        print(data['playerName'] + " has invited you to a challenge")
+        print(str(data['playerName']) + " has invited you to a challenge\n")
+        acceptance = input("Do you want to accept the challenge? Y/N\n")
+        accept = True if acceptance == "Y" or acceptance == "y" else False
+        connection.Send({"action": "getResponseToChallenge", "otherPlayer": data['playerName'], "id": self.id, "accept": accept})
+
+    def Network_rejectChallenge(self, data):
+        print(str(data['playerId']) + " has rejected your challenge.\n")
 
     # These methods deal with the checkers game.
     # print the game on the screen and highlight possible moves.

@@ -26,12 +26,14 @@ class ClientChannel(Channel):
         # TODO: remove the player from playerId ToPlayerChannel
         print("closing channel")
 
-    def Network_getChallengePlayer(self, data):
-        print(data)
+    def Network_getChallenge(self, data):
+        self._server.sendChallenge(data['id'], data['otherPlayer'])
 
     def Network_getResponseToChallenge(self, data):
-        # self._server.SendToAll()
-        print(data)
+        if data['accept']:
+            self._server.startGame(data['otherPlayer'], data['id'])
+        else:
+            self._server.rejectChallenge(data['id'], data['otherPlayer'])
 
     def Network_updateBoard(self, data):
         self._server.updateBoard(data['id'], data['move'])
@@ -53,23 +55,23 @@ class CheckersServer(Server):
         self.playerIdToPlayerChannel[playerId] = channel
 
         channel.Send({"action": "receiveId", "id": playerId})
-
-        # Temporary way to start the game -- if the second client connects, then start the game.
-        if playerId == 1:
-            self.startGame(0, playerId)
+        self.sendPlayers()
 
     # These methods have to do with connecting the game for many players.
-    def sendPlayers(self, channel):
+    def sendPlayers(self):
         # send something to both players in the game.
-        channel.Send({"action": "getPlayers", "players": self.playerIdToPlayerChannel.keys()})
+        for playerId, channel in self.playerIdToPlayerChannel.items():
+            if playerId not in self.playerIdToRoom:
+                x = list(map(lambda y: str(y), filter(lambda x: x not in self.playerIdToRoom, self.playerIdToPlayerChannel.keys())))
+                channel.Send({"action": "getPlayers", "players": x})
 
     def sendChallenge(self, playerId, otherPlayerId):
         # make sure the other player is not already in a game and that the other player exists.
         if otherPlayerId not in self.playerIdToRoom and otherPlayerId in self.playerIdToPlayerChannel:
             self.playerIdToPlayerChannel[otherPlayerId].Send({"action": "getChallenge", "playerName": playerId})
 
-    def acceptChallenge(self, playerId, otherPlayerId):
-        self.startGame(otherPlayerId, playerId)
+    def rejectChallenge(self, playerId, otherPlayerId):
+        self.playerIdToPlayerChannel[otherPlayerId].Send({"action": "rejectChallenge", "playerId": playerId})
 
     # These methods have to do with playing the game
     def startGame(self, player1, player2):

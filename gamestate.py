@@ -82,7 +82,6 @@ def get_move_from_player_for_network(possibleMoves):
 def send_message_ui(message):
     print(message)
 
-
 def run_game_state(game: GameState):  # game = GameState
     game.get_all_legal_moves()
     while not game.is_game_over():
