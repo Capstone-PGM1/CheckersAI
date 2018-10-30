@@ -886,7 +886,7 @@ def loadWinPage(color):
 		else:
 			winnerColor1 = black_outline
 			winnerColor2 = black_color
-
+		# button("home", 950, 700, 300, 300, tan_color, tan_highlight, 'home')
 		pygame.draw.circle(window, winnerColor1, (100, 100), 90, 90)
 		pygame.draw.circle(window, winnerColor2, (100, 100), 80, 80)
 		pygame.draw.circle(window, winnerColor1, (1100, 100), 90, 90)
@@ -934,6 +934,7 @@ def loadWinPage(color):
 		pygame.draw.circle(window, winnerColor2, (600, 200), 50, 50)
 
 		renderText(200, "You Win!", gold_color, (300, 20))
+
 		pygame.display.update()
 		clock.tick(15)
 
