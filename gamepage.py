@@ -24,8 +24,6 @@ gold_outline = (216, 171, 23)
 tan_color = (242, 221, 179)
 tan_highlight = (242, 235, 222)
 
-
-
 # create the background
 wood = pygame.image.load("wood.jpg")
 wood = pygame.transform.scale(wood, (1200, 900))
@@ -162,18 +160,20 @@ def load_board():
 
 class Pieces(object):
 
-	def draw_pieces(self, game):
+	def draw_pieces(self, game, selected):
 		board = game.get_board_for_network()
 		possible_moves = game.send_possible_moves_for_network()
 		# TODO: this always shows black on the bottom of the screen.
 		for item in board:
 			is_possible = (item[0], item[1]) in possible_moves
+			is_selected = True if selected == item else False
 			color = 'red' if board[item] == 'r' or board[item] == 'R' else 'black'
-			isKing = True if board[item] == 'R' or board[item] == 'B' else False
+			is_king = True if board[item] == 'R' or board[item] == 'B' else False
 			if board[item] != '.' and board[item] != '_':
-				self.draw_piece(color, item[0], item[1], is_possible, isKing)
+				availableMoves = possible_moves[item] if is_selected else []
+				self.draw_piece(color, item[0], item[1], is_possible, is_king, is_selected, availableMoves)
 
-	def draw_piece(self, piece_color, row, col, is_possible, is_king):
+	def draw_piece(self, piece_color, row, col, is_possible, is_king, is_selected, availableMoves):
 		outline = red_outline if piece_color == 'red' else black_outline
 		color = red_color if piece_color == 'red' else black_color
 		yPos = row * 80 + 170
@@ -183,22 +183,15 @@ class Pieces(object):
 
 		if is_possible:
 			pygame.draw.circle(window, light_green, (xPos, yPos), 38, 2)
+		if is_selected:
+			pygame.draw.circle(window, gold_outline, (xPos, yPos), 38, 2)
+			for move in availableMoves:
+				nextX = move['endRow'] * 80 + 170
+				nextY = move['endColumn'] * 80 + 170
+				pygame.draw.circle(window, gold_outline, (nextY, nextX), 38, 2)
 		if is_king:
+			crown = pygame.image.load("king.png").convert_alpha()
 			window.blit(crown, (xPos - 27, yPos - 17))
-
-def highlight_checkers(pieces):
-	for i in range(len (pieces)):
-		p = pieces[i]
-		t = p[1]
-		lower = t[0]
-		upper = t[1]
-		pygame.draw.circle(window, light_green, (lower, upper), 38, 2)
-
-def highlight_available_moves(availableMoves):
-	for i in range(len(availableMoves)):
-		lower = availableMoves[i][0]
-		upper = availableMoves[i][1]
-		pygame.draw.rect(window, light_green, (lower, upper, tile_size, tile_size), 2)
 
 def load_chatbox(gamestate):
 	if gamestate == 1:
@@ -487,8 +480,6 @@ def game_intro():
 
 		clock.tick(15)
 
-# if __name__ == '__main__':
-
 def gameLoop():
 	gameExit = False
 	gameOver = False
@@ -559,22 +550,20 @@ def gameLoop():
 				# loadPlayerChoicePage()
 				loadGamePage()
 				piece = Pieces()
-				# piece.player_color()
 				piece.draw_pieces(game)
 
-		# loadLoginPage()
-		# loadOnePlayerPage()
-		# loadWinPage(red)
-		# loadTwoPlayerPage()
-		# loadSettingsPage()
-		# pieces =[[250, 330]]
-		# highlight_checkers(pieces)
-		# availableMoves = [[130, 210]]
-		# highlight_available_moves(availableMoves)
-		# mouse_pressed()
-		# highlight_available_moves(blackChecks)
+				if event.type == pygame.QUIT:
+					gameExit = True
+				# Render Graphics
+				window.blit(Wood, (0, 0))
+				# draw checkers board
+				red = 1
+				black = 0
 
-
+				# loadPlayerChoicePage()
+				loadGamePage()
+				piece = Pieces()
+				piece.draw_pieces(game, initialClick)
 
 			pygame.display.flip()
 			clock.tick(FPS)
