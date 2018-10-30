@@ -240,12 +240,12 @@ def button(msg, x, y, w, h, ic, ac, action = None):
 
 			# game loop for one player
 			if action == "main1":
-				gameLoop()
+				gameLoop(True)
 
 			#game loop for two player
 			if action == "main2":
 				# add parameters to gameLoop for AI
-				gameLoop()
+				gameLoop(False)
 
 			if action == "home":
 				game_intro()
@@ -493,7 +493,22 @@ def game_intro():
 
 		clock.tick(15)
 
-def gameLoop():
+def check_win(game):
+	if game.is_game_over():
+		if game.is_draw():
+			print("The game is a draw.")
+		else:
+			winningPlayer = 'red' if game.is_win() == 0 else 'black'
+			if (winningPlayer == 'red'):
+				window.blit(Wood, (0, 0))
+				loadWinPage(1)
+			else:
+				window.blit(Wood, (0, 0))
+				loadWinPage(0)
+		return True
+	return False
+
+def gameLoop(use_AI):
 	gameExit = False
 	gameOver = False
 	FPS = 15
@@ -503,91 +518,78 @@ def gameLoop():
 		isRunning = True
 		# mx, my = pygame.mouse.get_pos()
 		initialClick = None
+		piece = Pieces()
 		game = GameState()
 		game.get_all_legal_moves()
 		while isRunning:
-			possible_moves = game.send_possible_moves_for_network()
-			events = pygame.event.get()
-			for event in events:
-				if event.type == pygame.QUIT:
+			if use_AI and game.activePlayer == 1:
+				initialClick = None
+				game.update_game_state_with_move(game.get_ai_move())
+				game.switch_player()
+				game.get_all_legal_moves()
+				if check_win(game):
 					isRunning = False
-					pygame.quit()
-					sys.exit()
-				elif event.type == pygame.MOUSEBUTTONDOWN:
-					col = ((pos[0] - 50)// 80) - 1
-					row = ((pos[1] - 50) // 80) - 1
+					break
+			else:
+				possible_moves = game.send_possible_moves_for_network()
+				events = pygame.event.get()
+				for event in events:
+					if event.type == pygame.QUIT:
+						isRunning = False
+						pygame.quit()
+						sys.exit()
+					elif event.type == pygame.MOUSEBUTTONDOWN:
+						col = ((pos[0] - 50)// 80) - 1
+						row = ((pos[1] - 50) // 80) - 1
 
-					if initialClick:
-						made_move = False
-						print(str(initialClick[0]) + str(initialClick[1]))
-						for possibleMove in game.board[initialClick[0]][initialClick[1]].possibleMoves:
-							if row == possibleMove.endRow and col == possibleMove.endColumn:
-								print("moved from " + str(initialClick) + " to (" + str(row) + ", " + str(col) + ")")
-								made_move = True
-								game.update_game_state_with_move(possibleMove)
-								game.switch_player()
-								game.get_all_legal_moves()
+						if initialClick:
+							made_move = False
+							for possibleMove in game.board[initialClick[0]][initialClick[1]].possibleMoves:
+								if row == possibleMove.endRow and col == possibleMove.endColumn:
+									print("moved from " + str(initialClick) + " to (" + str(row) + ", " + str(col) + ")")
+									made_move = True
+									game.update_game_state_with_move(possibleMove)
+									game.switch_player()
+									game.get_all_legal_moves()
 
-								if game.is_game_over():
-									if game.is_draw():
-										print("The game is a draw.")
-									else:
-										winningPlayer = 'red' if game.is_win() == 0 else 'black'
-										if(winningPlayer == 'red'):
-											window.blit(Wood, (0, 0))
-											loadWinPage(1)
-											isRunning = False
-											break
-										else:
-											window.blit(Wood, (0, 0))
-											loadWinPage(0)
-											isRunning = False
-											break
-								break
-						if not made_move:
-							print("cannot move from " + str(initialClick) + " to (" + str(row) + ", "+ str(col) + ")")
-							initialClick = None
+									if check_win(game):
+										isRunning = False
+										break
+							if not made_move:
+								print("cannot move from " + str(initialClick) + " to (" + str(row) + ", "+ str(col) + ")")
+								initialClick = None
 
-					# Debug prints
-					if (row, col) in possible_moves:
-						initialClick = (row, col)
-					print("Click ", pos, "Grid coordinates: ", row, col)
+						# Debug prints
+						if (row, col) in possible_moves:
+							initialClick = (row, col)
 
-				pos = pygame.mouse.get_pos()
-				x = pos[0]
-				y = pos[1]
+					pos = pygame.mouse.get_pos()
+					x = pos[0]
+					y = pos[1]
 
-				for event in pygame.event.get():
+					for event in pygame.event.get():
+
+						if event.type == pygame.QUIT:
+							gameExit = True
+					# Render Graphics
+					window.blit(Wood, (0, 0))
+					# draw checkers board
+					red = 1
+					black = 0
 
 					if event.type == pygame.QUIT:
 						gameExit = True
-				# Render Graphics
-				window.blit(Wood, (0, 0))
-				# draw checkers board
-				red = 1
-				black = 0
-				crown = pygame.image.load("king.png").convert_alpha()
+					# Render Graphics
+					window.blit(Wood, (0, 0))
+					# draw checkers board
+					red = 1
+					black = 0
 
-				# loadPlayerChoicePage()
 				loadGamePage()
-				piece = Pieces()
 				piece.draw_pieces(game, initialClick)
 
-				if event.type == pygame.QUIT:
-					gameExit = True
-				# Render Graphics
-				window.blit(Wood, (0, 0))
-				# draw checkers board
-				red = 1
-				black = 0
-
-				# loadPlayerChoicePage()
-				loadGamePage()
-				piece = Pieces()
-				piece.draw_pieces(game, initialClick)
-
-			pygame.display.flip()
-			clock.tick(FPS)
+				pygame.display.flip()
+				clock.tick(FPS)
 	pygame.quit()
 	quit()
 
