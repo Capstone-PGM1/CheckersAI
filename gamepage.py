@@ -217,6 +217,16 @@ def button(msg, x, y, w, h, ic, ac, action = None):
 			if action == "quit":
 				pygame.quit()
 				sys.exit()
+
+			if action == "soundOn":
+				pass
+
+			if action == "soundOff":
+				pass
+
+			if action == 'listOnline':
+				pass
+
 			if action == "player1":
 				loadOnePlayerPage()
 
@@ -388,7 +398,8 @@ def loadWinPage(color):
 		else:
 			winnerColor1 = black_outline
 			winnerColor2 = black_color
-		# button("home", 950, 700, 300, 300, tan_color, tan_highlight, 'home')
+		button("home", 950, 700, 300, 300, tan_color, tan_highlight, 'home')
+		window.blit(Wood, (0, 0))
 		pygame.draw.circle(window, winnerColor1, (100, 100), 90, 90)
 		pygame.draw.circle(window, winnerColor2, (100, 100), 80, 80)
 		pygame.draw.circle(window, winnerColor1, (1100, 100), 90, 90)
@@ -452,7 +463,7 @@ def loadSettingsPage():
 		window.blit(Wood, (0, 0))
 		pygame.draw.rect(window, tan_color, [200, 50, 800, 200])
 		renderText(150, "Settings", black_color, (340, 100))
-		renderText(60, "Prefered color", black_color, (470, 650))
+		renderText(50, "Prefered color", black_color, (470, 650))
 
 		button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
 		renderText(30, "Quit", black_color, (1115, 860))
@@ -461,6 +472,21 @@ def loadSettingsPage():
 		pygame.draw.circle(window, red_color, (530, 770), 50, 50)
 		pygame.draw.circle(window, black_outline, (670, 770), 60, 60)
 		pygame.draw.circle(window, black_color, (670, 770), 50, 50)
+
+		button("soundOn", 200, 300, 100, 60, tan_color, tan_highlight, 'soundOn')
+		renderText(25, "Sound On", black_color, (205, 310))
+		button("soundOff", 350, 300, 100, 60, tan_color, tan_highlight, 'soundOff')
+		renderText(25, "Sound Off", black_color, (355, 310))
+		button("listOnline", 700, 300, 300, 60, tan_color, tan_highlight, 'listOnline')
+		renderText(40, "List me online", black_color, (740, 310))
+
+		# button("medium", 450, 410, 300, 60, (0, 0, 0), 'main1')
+		pygame.draw.rect(window, (tan_color), (450, 475, 300, 60))
+		renderText(50, "Update Username", black_color, (460, 440))
+
+		pygame.draw.rect(window, (tan_color), (450, 585, 300, 60))
+		renderText(50, "Update Password", black_color, (460, 550))
+
 		pygame.display.update()
 		clock.tick(15)
 
