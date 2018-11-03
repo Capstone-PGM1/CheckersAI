@@ -21,10 +21,12 @@ class ClientChannel(Channel):
         Channel.__init__(self, *args, **kwargs)
 
     def Close(self):
-        # TODO: how to get id?
-        # TODO: remove the player from the game, if the game exists.
-        # TODO: remove the player from playerId ToPlayerChannel
         print("closing channel")
+        if self.id in self._server.playerIdToRoom:
+            self._server.deleteGame(self._server.playerIdToRoom[self.id], str(self.id) + " has left the game.")
+        self._server.playerIdToPlayerChannel.pop(self.id)
+        print(self._server.playerIdToPlayerChannel.keys())
+        self._server.sendPlayers()
 
     def Network_getChallenge(self, data):
         self._server.sendChallenge(data['id'], data['otherPlayer'])
@@ -39,7 +41,10 @@ class ClientChannel(Channel):
         self._server.updateBoard(data['id'], data['move'])
 
     def Network_message(self, data):
-        self._server.sendToPlayersInGame(data['playerId'], {"action": data['message'], "playerName": str(data['playerId'])})
+        self._server.sendToPlayersInGame(data['playerId'], {"action": 'message', "message": data['message'], "playerName": str(data['playerId'])})
+
+    def Network_disconnect(self):
+        self.Close()
 
 class CheckersServer(Server):
     channelClass = ClientChannel
@@ -49,10 +54,13 @@ class CheckersServer(Server):
         self.playerIdToPlayerChannel = dict()
         self.playerIdToRoom = dict()
         self.counter = 0
+        self.nextId = 0
 
     def Connected(self, channel, addr):
-        playerId = len(self.playerIdToPlayerChannel)
+        playerId = self.nextId
+        self.nextId += 1
         self.playerIdToPlayerChannel[playerId] = channel
+        channel.id = playerId
 
         channel.Send({"action": "receiveId", "id": playerId})
         self.sendPlayers()
@@ -97,8 +105,9 @@ class CheckersServer(Server):
             self.playerIdToPlayerChannel[room.player1].Send(
                 {"action": "getPossibleMoves", "game": room.game.get_board_for_network()})
 
-    def deleteGame(self, game):
+    def deleteGame(self, game, message):
         print("received delete game request")
+        self.sendToPlayersInGame(game.player1, {"action": "message", "playerName": "game", "message": message})
 
         self.playerIdToRoom.pop(game.player1)
         self.playerIdToRoom.pop(game.player2)
@@ -121,12 +130,8 @@ class CheckersServer(Server):
 
         # If the game is over, notify participants and delete the game.
         if room.game.is_game_over():
-            if room.game.is_draw():
-                self.sendToPlayersInGame(player, {"action": "gameEnd", "endMessage": "Draw"})
-            else:
-                winningPlayer = room.game.is_win()
-                self.sendToPlayersInGame(player, {"action": "gameEnd", "endMessage": winningPlayer})
-            self.deleteGame(self.playerIdToRoom[player])
+            message = "The game has ended in a draw." if room.game.is_draw() else "Player " + str(room.game.is_win()) + " has won the game."
+            self.deleteGame(self.playerIdToRoom[player], message)
         #     Otherwise, continue sending the board to the players.
         else:
             self.sendBoardToPlayers(player)

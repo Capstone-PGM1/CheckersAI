@@ -1,6 +1,7 @@
 import pygame, sys, time
 from tiles import *
 from classes import *
+from client import *
 
 pygame.init()
 pygame.font.init()
@@ -13,6 +14,7 @@ currFrame = 0
 FPS = 0
 tile_size = 80
 w = 80
+myClient = None
 
 light_green = (83, 249, 88)
 black_color = (0, 0, 0)
@@ -50,7 +52,6 @@ def draw_grid():
 		# c = 1
 	# return grid_map
 	window.blit(Wood, (0, 0))
-
 
 # create game window - will make maximize button later
 def create_window():
@@ -209,6 +210,7 @@ def king_piece(gamePiece, position):
 	window.blit(crown, (xPos - 27, yPos - 17))
 
 def button(msg, x, y, w, h, ic, ac, action = None):
+	global myClient
 	cur = pygame.mouse.get_pos()
 	click = pygame.mouse.get_pressed()
 	if x + w > cur[0] > x and y + h > cur[1] > y:
@@ -224,8 +226,13 @@ def button(msg, x, y, w, h, ic, ac, action = None):
 			if action == "soundOff":
 				pass
 
+			if action == "challenge" and myClient:
+				myClient.sendChallenge(msg)
+
 			if action == 'listOnline':
-				pass
+				if not myClient:
+					myClient = startClient()
+					myClient.pump()
 
 			if action == "player1":
 				loadOnePlayerPage()
@@ -237,16 +244,16 @@ def button(msg, x, y, w, h, ic, ac, action = None):
 				loadSettingsPage()
 
 			if action == "PlayOnline":
-				pass
+				print("clicked play online")
 
 			if action == "LocalGame":
-				pass
+				gameLoop(False)
 
 			if action == "p1":
-				pass
+				print("In action p1")
 
 			if action == "p2":
-				pass
+				print("In action p2")
 
 			# game loop for one player
 			if action == "main1":
@@ -267,7 +274,6 @@ def renderText(fontSize, message, color, position):
 	myfont = pygame.font.SysFont('Comic Sans MS', fontSize)
 	textsurface = myfont.render(message, False, color)
 	window.blit(textsurface, position)
-
 
 def loadLogo():
 	pygame.draw.circle(window, black_outline, (900, 300), 180, 180)
@@ -293,9 +299,6 @@ def loadGamePage():
 	renderText(30, "Quit", black_color, (1115, 860))
 	# player_color(black)
 	load_chatbox(online)
-
-
-	# king_piece(gamePiece, pos3)
 
 def loadPlayerChoicePage():
 	loadLogo()
@@ -359,8 +362,13 @@ def loadTwoPlayerPage():
 		for event in pygame.event.get():
 				#print(event)
 				if event.type == pygame.QUIT:
+					if myClient:
+						myClient.closeConnection()
 					pygame.quit()
 					quit()
+				if myClient:
+					myClient.pump()
+
 		window.blit(Wood, (0, 0))
 		pygame.draw.rect(window, tan_color, [200, 50, 800, 200])
 		renderText(150, "New Game", black_color, (340, 100))
@@ -374,11 +382,31 @@ def loadTwoPlayerPage():
 		renderText(30, "Settings", black_color, (1100, 30))
 
 		pygame.draw.rect(window, tan_color, [700, 400, 300, 250])
+		if myClient and hasattr(myClient, "otherPlayers"):
+			xNum = 700
+			yNum = 400
+			for player in myClient.otherPlayers:
+				# I need to be able to make a button for each player too.
+				button(player, xNum, yNum, 300, 60, tan_color, tan_highlight, "challenge")
+				renderText(60, player, black_color, (xNum, yNum))
+				yNum += 50
+		else:
+			button("Find online players.", 700, 400, 300, 60, tan_color, tan_highlight, "listOnline")
+			renderText(60, "Find online players.", black_color, (700, 400))
 
 		button("player1", 420, 800, 150, 40, tan_color, tan_highlight, 'p1')
 		renderText(40, "Accept", black_color, (450, 805))
 		button("player2", 630, 800, 150, 40, tan_color, tan_highlight, 'p2')
 		renderText(40, "Decline", black_color, (655, 805))
+
+		if myClient and myClient.hasChallenge:
+			myClient.pump()
+			if hasattr(myClient, "challengeFrom"):
+				button("Received challenge from " + myClient.challengeFrom + ". Do you want to accept?", xNum, yNum + 100, 300, 60, tan_color, tan_highlight, 'main2')
+				renderText(60, "Received challenge", black_color, (xNum, 660))
+			else:
+				button("Sent challenge", xNum, yNum + 100, 300, 60, tan_color, tan_highlight, 'main2')
+				renderText(30, "Waiting for player to respond...", black_color, (xNum, 660))
 		pygame.display.update()
 		clock.tick(15)
 
@@ -389,6 +417,8 @@ def loadWinPage(color):
 		for event in pygame.event.get():
 				#print(event)
 				if event.type == pygame.QUIT:
+					if myClient:
+						myClient.closeConnection()
 					pygame.quit()
 					quit()
 		move = 80
@@ -456,7 +486,8 @@ def loadSettingsPage():
 
 	while gcont:
 		for event in pygame.event.get():
-				#print(event)
+				if myClient:
+					myClient.closeConnection()
 				if event.type == pygame.QUIT:
 					pygame.quit()
 					quit()
@@ -479,6 +510,9 @@ def loadSettingsPage():
 		renderText(25, "Sound Off", black_color, (355, 310))
 		button("listOnline", 700, 300, 300, 60, tan_color, tan_highlight, 'listOnline')
 		renderText(40, "List me online", black_color, (740, 310))
+
+		button("2 player page", 700, 375, 300, 60, tan_color, tan_highlight, 'player2')
+		renderText(40, "2 player page", black_color, (740, 410))
 
 		# button("medium", 450, 410, 300, 60, (0, 0, 0), 'main1')
 		pygame.draw.rect(window, (tan_color), (450, 475, 300, 60))

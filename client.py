@@ -7,6 +7,7 @@ import sys
 class Client(ConnectionListener):
     def __init__(self, host, port):
         self.Connect((host, port))
+        self.hasChallenge = False
 
     def Network(self, data):
         print
@@ -20,9 +21,12 @@ class Client(ConnectionListener):
         print
         "error:", data['error'][1]
 
-    def Network_disconnected(self, data):
+    def Network_disconnect(self):
         print
         "disconnected from the server"
+
+    def closeConnection(self):
+        connection.Send({"action": "disconnect"})
 
     def Network_receiveId(self, data):
         self.id = data['id']
@@ -36,69 +40,61 @@ class Client(ConnectionListener):
     # When the server sends the list of players, display possible
     # players on the screen
     def Network_getPlayers(self, data):
-        playersOtherThanSelf = list(filter(lambda x: x != str(self.id), data['players']))
-        print("Available Players: " + ', '.join(playersOtherThanSelf))
-        challenge = input("Do you want to challenge a player? Y/N\n")
-        if challenge == "Y" or challenge == "y":
-            otherPlayer = input("Who do you want to challenge?\n")
+        self.otherPlayers = list(filter(lambda x: x != str(self.id), data['players']))
 
-            connection.Send({"action": "getChallenge", "id": self.id, "otherPlayer": int(otherPlayer)})
+    def sendChallenge(self, otherPlayerId):
+        self.hasChallenge = True
+        self.challenger = otherPlayerId
+        connection.Send({"action": "getChallenge", "id": self.id, "otherPlayer": int(otherPlayerId)})
 
     # When receiving a challenge from another player, display the challenger on the screen
     def Network_getChallenge(self, data):
-        print(str(data['playerName']) + " has invited you to a challenge\n")
-        acceptance = input("Do you want to accept the challenge? Y/N\n")
-        accept = True if acceptance == "Y" or acceptance == "y" else False
-        connection.Send({"action": "getResponseToChallenge", "otherPlayer": data['playerName'], "id": self.id, "accept": accept})
+        if not self.hasChallenge:
+            self.hasChallenge = True
+            self.challengeFrom = (data['playerName'])
+            print(str(data['playerName']) + " has invited you to a challenge\n")
+
+    def respondToChallenge(self, otherPlayer, response):
+        self.hasChallenge = False
+        connection.Send({"action": "getResponseToChallenge", "otherPlayer": otherPlayer, "id": self.id, "accept": response})
 
     def Network_rejectChallenge(self, data):
-        print(str(data['playerId']) + " has rejected your challenge.\n")
+        self.hasChallenge = False
+        self.rejectedChallenge = data['playerId']
 
     # These methods deal with the checkers game.
     # print the game on the screen and highlight possible moves.
     def Network_getPossibleMoves(self, data):
         # data['game'] is a {(rowIndex, columnIndex): 'char'} for each item.
         # Characters: x is black, o is red, K is a red king, Q is a black king, and R/B are pieces.
-        self.printGame(data['game'])
+        self.game = data['game']
         if "possibleMoves" in data:
-            # data['possibleMoves'] = {(startRow, startColumn): [{endRow, endColumn, piecesNumber}]}.
-            # It doesn't include pieces that have no possible moves.
-            move = get_move_from_player_for_network(data['possibleMoves'])
-            # move here expects a {"startRow": row, "startColumn": column, "endRow": row1, "endColumn": column1}
-            self.sendResponse(move)
-
-    def printGame(self, gameDict):
-        firstRow = '  '
-        for i in range(8):
-            firstRow += str(i) + ' '
-        print(firstRow)
-
-        for row in range(8):
-            rowString = str(row) + ' '
-            for column in range(8):
-                rowString += gameDict[(row, column)] + " "
-            print(rowString)
+            self.possibleMoves = data['possibleMoves']
 
     def Network_gameEnd(self, data):
-        print(data['endMessage'])
+        self.gameOver = True
+        self.winner = data['winner']
 
     def sendResponse(self, move):
         connection.Send({"action": "updateBoard", "move": move, "id": self.id})
 
     # This method deals with the chat room.
     def Network_message(self, data):
-        print(data['playerName'] + ": " + data['message'])
+        self.latestMessage = {data['playerName']: data['message']}
 
     def sendMessage(self, message):
         connection.Send({"action": "message", "id": self.id, "message": message})
 
+    def pump(self):
+        self.Loop()
 
-if len(sys.argv) != 2:
-    print("Usage:", sys.argv[0], "host:port")
-    print("e.g.", sys.argv[0], "localhost:31425")
-else:
-    host, port = sys.argv[1].split(":")
-    c = Client(host, int(port))
+def startClient():
+    #  TODO: make this a real server one day.
+    return Client('localhost', 12345)
+
+if __name__ == '__main__':
+    c = startClient()
+
     while 1:
         c.Loop()
         sleep(0.001)
