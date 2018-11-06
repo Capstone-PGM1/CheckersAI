@@ -142,7 +142,7 @@ def load_board():
 	lower1, upper1, lower2, upper2, = 130, 210, 690, 770
 	load_white_tiles(lower1, upper1, lower2, upper2, 1)
 
-# game boarder
+# game border
 	for x in range(110, 130, 20):
 		for y in range(130, 770 , 20):
 			window.blit(Tiles.blackTile, (x, y))
@@ -161,9 +161,7 @@ def load_board():
 
 class Pieces(object):
 
-	def draw_pieces(self, game, selected):
-		board = game.get_board_for_network()
-		possible_moves = game.send_possible_moves_for_network()
+	def draw_pieces(self, board, possible_moves, selected):
 		# TODO: this always shows black on the bottom of the screen.
 		for item in board:
 			is_possible = (item[0], item[1]) in possible_moves
@@ -258,6 +256,12 @@ def button(msg, x, y, w, h, ic, ac, action = None):
 			# game loop for one player
 			if action == "main1":
 				gameLoop(True)
+
+			if action == "acceptChallenge":
+				myClient.respondToChallenge(True)
+
+			if action == "rejectChallenge":
+				myClient.respondToChallenge(False)
 
 			#game loop for two player
 			if action == "main2":
@@ -362,8 +366,8 @@ def loadTwoPlayerPage():
 		for event in pygame.event.get():
 				#print(event)
 				if event.type == pygame.QUIT:
-					if myClient:
-						myClient.closeConnection()
+					# if myClient:
+					# 	myClient.closeConnection()
 					pygame.quit()
 					quit()
 				if myClient:
@@ -394,18 +398,25 @@ def loadTwoPlayerPage():
 			button("Find online players.", 700, 400, 300, 60, tan_color, tan_highlight, "listOnline")
 			renderText(60, "Find online players.", black_color, (700, 400))
 
-		button("player1", 420, 800, 150, 40, tan_color, tan_highlight, 'p1')
-		renderText(40, "Accept", black_color, (450, 805))
-		button("player2", 630, 800, 150, 40, tan_color, tan_highlight, 'p2')
-		renderText(40, "Decline", black_color, (655, 805))
+		if myClient and myClient.hasCurrentGame:
+			loadGamePage()
+			gameLoop(False)
 
-		if myClient and myClient.hasChallenge:
-			myClient.pump()
-			if hasattr(myClient, "challengeFrom"):
-				button("Received challenge from " + myClient.challengeFrom + ". Do you want to accept?", xNum, yNum + 100, 300, 60, tan_color, tan_highlight, 'main2')
-				renderText(60, "Received challenge", black_color, (xNum, 660))
+		if myClient and myClient.rejectedChallenge:
+			button(
+			"Your challenge to " + str(myClient.rejectedChallenge) + " was rejected.",
+			xNum, yNum + 150, 300, 60, tan_color, tan_highlight, 'main2')
+			renderText(60, "challenge rejected", black_color, (xNum, 660))
+			myClient.acknowledge_rejected_challenge()
+
+		if myClient and myClient.pendingChallenge:
+			if myClient.pendingChallenge.challengeTo == myClient.id:
+				button("player1", 420, 800, 150, 40, tan_color, tan_highlight, 'acceptChallenge')
+				renderText(40, "Accept", black_color, (450, 805))
+				button("player2", 630, 800, 150, 40, tan_color, tan_highlight, 'rejectChallenge')
+				renderText(40, "Decline", black_color, (655, 805))
 			else:
-				button("Sent challenge", xNum, yNum + 100, 300, 60, tan_color, tan_highlight, 'main2')
+				button("Sent challenge to " + str(myClient.pendingChallenge.challengeTo), xNum, yNum + 100, 300, 60, tan_color, tan_highlight, 'main2')
 				renderText(30, "Waiting for player to respond...", black_color, (xNum, 660))
 		pygame.display.update()
 		clock.tick(15)
@@ -417,8 +428,8 @@ def loadWinPage(color):
 		for event in pygame.event.get():
 				#print(event)
 				if event.type == pygame.QUIT:
-					if myClient:
-						myClient.closeConnection()
+					# if myClient:
+					# 	myClient.closeConnection()
 					pygame.quit()
 					quit()
 		move = 80
@@ -486,8 +497,8 @@ def loadSettingsPage():
 
 	while gcont:
 		for event in pygame.event.get():
-				if myClient:
-					myClient.closeConnection()
+				# if myClient:
+				# 	myClient.closeConnection()
 				if event.type == pygame.QUIT:
 					pygame.quit()
 					quit()
@@ -574,14 +585,17 @@ def gameLoop(use_AI):
 	FPS = 15
 
 	while not gameExit:
-
+		global myClient
 		isRunning = True
 		# mx, my = pygame.mouse.get_pos()
 		initialClick = None
 		piece = Pieces()
 		game = GameState()
 		game.get_all_legal_moves()
+		loadGamePage()
+		pygame.display.flip()
 		while isRunning:
+			# this is the AI's turn.
 			if use_AI and game.activePlayer == 1:
 				initialClick = None
 				game.update_game_state_with_move(game.get_ai_move())
@@ -590,6 +604,69 @@ def gameLoop(use_AI):
 				if check_win(game):
 					isRunning = False
 					break
+			# networked version
+			elif myClient and myClient.hasCurrentGame:
+				# If it's the current player's turn
+				myClient.pump()
+				if myClient.possibleMoves:
+					possible_moves = myClient.possibleMoves
+					events = pygame.event.get()
+					for event in events:
+						if event.type == pygame.QUIT:
+							# TODO: delete game then.
+							isRunning = False
+							pygame.quit()
+							sys.exit()
+						elif event.type == pygame.MOUSEBUTTONDOWN:
+							col = ((pos[0] - 50) // 80) - 1
+							row = ((pos[1] - 50) // 80) - 1
+							print(row, col)
+
+							if initialClick and initialClick in possible_moves:
+								made_move = False
+								print(possible_moves)
+								for possibleMove in possible_moves[initialClick]:
+
+									print("possibleMoveValue: {}. type: {}".format(possibleMove, type(possibleMove)))
+									# print("possible row: {}, col: {}".format(possibleMove['e', possibleMove[1]))
+									# print("received row: {}, col: {}".format(row, col))
+
+									if row == possibleMove['endRow'] and col == possibleMove['endColumn']:
+										print(
+											"trying to move from " + str(initialClick) + " to (" + str(row) + ", " + str(col) + ")")
+										myClient.sendResponse({
+											"startRow": initialClick[0],
+											"startColumn": initialClick[1],
+											"endRow": row,
+											"endCol": col})
+										initialClick = None
+									# else:
+									# 	print("move doesn't work")
+									# 	# initialClick = None
+								if not made_move:
+									print("cannot move from {} to ({}, {})".format(str(initialClick), row, col))
+									initialClick = None
+							# Debug prints
+							if (row, col) in possible_moves:
+								initialClick = (row, col)
+
+						pos = pygame.mouse.get_pos()
+
+				for event in pygame.event.get():
+
+					if event.type == pygame.QUIT:
+						gameExit = True
+				# Render Graphics
+				window.blit(Wood, (0, 0))
+
+				loadGamePage()
+				# Update board
+				possible_moves = myClient.possibleMoves if myClient.possibleMoves else {}
+				piece.draw_pieces(myClient.board, possible_moves, initialClick)
+
+				pygame.display.flip()
+				clock.tick(FPS)
+			# get the move from the board.
 			else:
 				possible_moves = game.send_possible_moves_for_network()
 				events = pygame.event.get()
@@ -601,6 +678,7 @@ def gameLoop(use_AI):
 					elif event.type == pygame.MOUSEBUTTONDOWN:
 						col = ((pos[0] - 50)// 80) - 1
 						row = ((pos[1] - 50) // 80) - 1
+						print(row, col)
 
 						if initialClick:
 							made_move = False
@@ -619,34 +697,19 @@ def gameLoop(use_AI):
 								print("cannot move from " + str(initialClick) + " to (" + str(row) + ", "+ str(col) + ")")
 								initialClick = None
 
-						# Debug prints
 						if (row, col) in possible_moves:
 							initialClick = (row, col)
 
 					pos = pygame.mouse.get_pos()
-					x = pos[0]
-					y = pos[1]
 
 					for event in pygame.event.get():
 
 						if event.type == pygame.QUIT:
 							gameExit = True
-					# Render Graphics
-					window.blit(Wood, (0, 0))
-					# draw checkers board
-					red = 1
-					black = 0
-
-					if event.type == pygame.QUIT:
-						gameExit = True
-					# Render Graphics
-					window.blit(Wood, (0, 0))
-					# draw checkers board
-					red = 1
-					black = 0
 
 				loadGamePage()
-				piece.draw_pieces(game, initialClick)
+				# # Update board
+				piece.draw_pieces(game.get_board_for_network(), game.send_possible_moves_for_network(), initialClick)
 
 				pygame.display.flip()
 				clock.tick(FPS)
