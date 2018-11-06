@@ -5,7 +5,7 @@ import sys
 # lives in each Cell on the board
 class Piece(object):
     def __init__(self, color, king=False):
-        self.color = color  # 0 is red, 1 is white, 2 is Empty
+        self.color = color  # 0 is red, 1 is black, 2 is Empty
         self.king = king
 
 
