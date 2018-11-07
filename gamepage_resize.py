@@ -52,9 +52,6 @@ class Page(object):
 
 
 class Intro(Page):
-    def __init__(self):
-        Page.__init__(self)
-
     def load_intro(self, window: pg.Surface):
         draw_black_circle(450, 150, intro_circle_radius, intro_outline_radius, window)
         draw_red_circle(350, 150, intro_circle_radius, intro_outline_radius, window)
@@ -64,9 +61,6 @@ class Intro(Page):
 
 
 class Settings(Page):
-    def __init__(self):
-        Page.__init__(self)
-
     def load_settings(self, window: pg.Surface):
         pg.draw.rect(window, tan_color, [100, 25, 400, 80])
         window.blit(render_text(70, "Settings", black_color), (150, 5))
@@ -74,9 +68,6 @@ class Settings(Page):
 
 
 class OnePlayerOptions(Page):
-    def __init__(self):
-        Page.__init__(self)
-
     def load_1p_options(self, window: pg.Surface):
         pg.draw.rect(window, tan_color, [100, 25, 400, 80])
         window.blit(render_text(70, "New Game", black_color), (150, 5))
@@ -84,9 +75,6 @@ class OnePlayerOptions(Page):
 
 
 class TwoPlayerOptions(Page):
-    def __init__(self):
-        Page.__init__(self)
-
     def load_2p_options(self, window: pg.Surface):
         pg.draw.rect(window, tan_color, [100, 25, 400, 80])
         window.blit(render_text(70, "New Game", black_color), (150, 5))
@@ -185,12 +173,15 @@ class GamePage(Page):
 
 
 class WinPage(Page):
-    def __init__(self, winner=2):
+    def __init__(self, winner):
         Page.__init__(self)
         self.winner = winner
 
     def load_win_page(self, window):
-        if self.winner == 0:
+        if self.winner == 2:
+            winnerColor1 = gold_outline
+            winnerColor2 = gold_color
+        elif self.winner == 0:
             winnerColor1 = red_outline
             winnerColor2 = red_color
         else:
@@ -225,7 +216,11 @@ class WinPage(Page):
         pygame.draw.circle(window, gold_outline, (300, 100), 30, 30)
         pygame.draw.circle(window, winnerColor2, (300, 100), 25, 25)
 
-        window.blit(render_text(80, "You Win!", gold_color), (150, 5))
+        if self.winner == 2:
+            text = "It's a Draw!"
+        else:
+            text = "You Win!"
+        window.blit(render_text(80, text, gold_color), (150, 5))
 
 
 class ScreenControl(object):
@@ -371,39 +366,8 @@ class ScreenControl(object):
     def screen_event(self):
         for event in pg.event.get():
             self.keys = pg.key.get_pressed()
-            if isinstance(self.page, GamePage) and (self.page.gameState.activePlayer == 0 or not self.page.AIgame):
-                if event.type == pg.MOUSEBUTTONDOWN:
-                    self.done = True
-                elif event.type == pg.VIDEORESIZE:
-                    self.screen = pg.display.set_mode(event.size, pg.RESIZABLE)
-                    self.screen_rect = self.screen.get_rect()
-                elif isinstance(self.page, GamePage) and (self.page.gameState.activePlayer == 0 or not self.page.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
-                        pos = pygame.mouse.get_pos()
-                        image_x = self.screen_rect.center[0] - (SCREEN_START_SIZE[0] * self.scale) / 2
-                        image_y = self.screen_rect.center[1] - (SCREEN_START_SIZE[1] * self.scale) / 2
-                        col = int((((pos[0] - image_x) / self.scale - 25) // 40) - 1)
-                        row = int((((pos[1] - image_y) / self.scale - 25) // 40) - 1)
-
-                        made_move = False
-                        if self.page.initial_click:
-                            for possibleMove in self.page.gameState.board[self.page.initial_click[0]][self.page.initial_click[1]].possibleMoves:
-                                if row == possibleMove.endRow and col == possibleMove.endColumn:
-                                    print("moved from " + str(self.page.initial_click) + " to (" + str(row) + ", " + str(col) + ")")
-                                    made_move = True
-                                    self.page.gameState.update_game_state_with_move(possibleMove)
-                                    self.page.gameState.switch_player()
-                                    self.page.gameState.get_all_legal_moves()
-
-                            if not made_move:
-                                print("cannot move from " + str(self.page.initial_click) + " to (" + str(row) + ", " + str(col) + ")")
-                                self.page.initial_click = None
-                        possible_moves = self.page.gameState.send_possible_moves_for_network()   # NEED A BETTER PLACE FOR IT, MAYBE A PARAMTER IN CLASS
-                        if (row, col) in possible_moves:
-                            self.page.initial_click = (row, col)
-                        if made_move:
-                            is_win = self.page.check_win()
-                            if is_win != -1:
-                                self.page = WinPage()
+            if event.type == pg.QUIT or self.keys[pg.K_ESCAPE]:
+                self.done = True
             elif event.type == pg.VIDEORESIZE:
                 self.screen = pg.display.set_mode(event.size, pg.RESIZABLE)
                 self.screen_rect = self.screen.get_rect()
@@ -434,7 +398,9 @@ class ScreenControl(object):
                     if made_move:
                         is_win = self.page.check_win()
                         if is_win != -1:
-                            self.page = WinPage()
+                            self.page = WinPage(is_win)
+        if self.client:
+            self.client.pump()
 
     def screen_update(self):
         self.image.blit(self.page.get_background(), (0, 0))
@@ -478,7 +444,9 @@ class ScreenControl(object):
                 self.page.gameState.update_game_state_with_move(self.page.gameState.get_ai_move())
                 self.page.gameState.switch_player()
                 self.page.gameState.get_all_legal_moves()
-                check_win(self.page.gameState, self.image)
+                is_win = self.page.check_win()
+                if is_win != -1:
+                    self.page = WinPage(is_win)
         if self.client:
             self.client.closeConnection()
 
