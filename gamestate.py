@@ -87,7 +87,7 @@ def run_game_state(game: GameState):  # game = GameState
     while not game.is_game_over():
         send_game_state_to_ui(game)
         move = get_move_from_player(game)
-        game.update_game_state_with_move(move)
+        game.update_game_state_with_move_helper(move)
         game.switch_player()
         game.get_all_legal_moves()
     send_game_state_to_ui(game)

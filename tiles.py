@@ -4,7 +4,7 @@ pygame.init()
 
 class Tiles:
 	# tile size
-	Size = 80
+	Size = 40
 	# function for scaling tiles
 	def Load_Texture(file, Size):
 		bitmap = pygame.image.load(file)
@@ -20,4 +20,4 @@ class Tiles:
 	# https://opengameart.org/content/seamless-pattern-fabric-textile
 	tanTile = Load_Texture("tan.png", Size)
 	# https://opengameart.org/content/leather-black
-	blackTile = Load_Texture("black.png", 20)
+	blackTile = Load_Texture("black.png", 10)

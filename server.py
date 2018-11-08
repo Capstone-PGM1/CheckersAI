@@ -7,13 +7,13 @@ from time import sleep
 import sys
 
 class RoomInfo:
-    def __init__(self, player1, player2, game):
+    def __init__(self, player0, player1, game):
+        self.player0 = player0
         self.player1 = player1
-        self.player2 = player2
         self.game = game
 
     def __repr__(self):
-        return "player1: " + str(self.player1) + "\nPlayer2: " + str(self.player2)
+        return "player0: " + str(self.player0) + "\nplayer1: " + str(self.player0)
 
 class ClientChannel(Channel):
     def __init__(self, *args, **kwargs):
@@ -32,9 +32,8 @@ class ClientChannel(Channel):
         self._server.sendChallenge(data['id'], data['otherPlayer'])
 
     def Network_getResponseToChallenge(self, data):
-        print("in get response to challenge")
         if data['response']:
-            self._server.startGame(data['id'], data['otherPlayer'])
+            self._server.startGame(data['otherPlayer'], data['id'])
         else:
             self._server.rejectChallenge(data['id'], data['otherPlayer'])
 
@@ -84,14 +83,14 @@ class CheckersServer(Server):
         self.playerIdToPlayerChannel[otherPlayerId].Send({"action": "rejectChallenge", "playerId": playerId})
 
     # These methods have to do with playing the game
-    def startGame(self, player1, player2):
-        room = RoomInfo(player1, player2, GameState())
+    def startGame(self, player0, player1):
+        room = RoomInfo(player0, player1, GameState())
+        self.playerIdToRoom[player0] = room
         self.playerIdToRoom[player1] = room
-        self.playerIdToRoom[player2] = room
 
-        self.sendBoardToPlayers(player1)
+        self.sendBoardToPlayers(player0)
 
-        self.sendToPlayersInGame(player1, {"action": "acceptChallenge"})
+        self.sendToPlayersInGame(player0, {"action": "acceptChallenge"})
 
     def sendBoardToPlayers(self, player):
         print("sending the board to the players")
@@ -100,23 +99,23 @@ class CheckersServer(Server):
         room.game.get_all_legal_moves()
 
         if room.game.activePlayer == 0:
-            self.playerIdToPlayerChannel[room.player1].Send(
+            self.playerIdToPlayerChannel[room.player0].Send(
                 {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "possibleMoves": room.game.send_possible_moves_for_network()})
-            self.playerIdToPlayerChannel[room.player2].Send(
+            self.playerIdToPlayerChannel[room.player1].Send(
                 {"action": "getPossibleMoves", "game": room.game.get_board_for_network()})
         else:
-            self.playerIdToPlayerChannel[room.player2].Send(
-                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "possibleMoves": room.game.send_possible_moves_for_network()})
             self.playerIdToPlayerChannel[room.player1].Send(
+                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "possibleMoves": room.game.send_possible_moves_for_network()})
+            self.playerIdToPlayerChannel[room.player0].Send(
                 {"action": "getPossibleMoves", "game": room.game.get_board_for_network()})
         # self.Pump()
 
     def deleteGame(self, game, message):
         print("received delete game request")
-        self.sendToPlayersInGame(game.player1, {"action": "message", "playerName": "game", "message": message})
+        self.sendToPlayersInGame(game.player0, {"action": "message", "playerName": "game", "message": message})
 
+        self.playerIdToRoom.pop(game.player0)
         self.playerIdToRoom.pop(game.player1)
-        self.playerIdToRoom.pop(game.player2)
 
     def updateBoard(self, player, move):
         print("in server's update board")
@@ -126,15 +125,8 @@ class CheckersServer(Server):
             self.sendBoardToPlayers(player)
             return
 
-        for possibleMove in room.game.board[move['startRow']][move['startColumn']].possibleMoves:
-            if move['endCol'] == possibleMove.endColumn and move['endRow'] == possibleMove.endRow:
-                print("move is valid. updating game.")
-                room.game.update_game_state_with_move(possibleMove)
-                room.game.switch_player()
-                room.game.get_all_legal_moves()
-            else:
-                self.sendBoardToPlayers(player)
-                return
+        room.game.update_game_state_with_move(move['startRow'], move['startColumn'], move['endRow'], move['endCol'])
+        self.sendBoardToPlayers(player)
 
         # If the game is over, notify participants and delete the game.
         if room.game.is_game_over():
@@ -149,10 +141,10 @@ class CheckersServer(Server):
         room = self.playerIdToRoom[player]
         print(room)
 
+        self.playerIdToPlayerChannel[room.player0].Send(toSend)
+        print('sent to player 1: ' + str(room.player0))
         self.playerIdToPlayerChannel[room.player1].Send(toSend)
-        print('sent to player 1: ' + str(room.player1))
-        self.playerIdToPlayerChannel[room.player2].Send(toSend)
-        print('sent to player 2: ' + str(room.player2))
+        print('sent to player 2: ' + str(room.player1))
 
 
     def Launch(self):

@@ -7,17 +7,17 @@ import sys
 
 class PendingChallenge:
     def __init__(self, challengeTo, challengeFrom, startTime):
-        self.challengeTo = challengeTo
-        self.challengeFrom = challengeFrom
-        self.startTime = startTime
+        self.challenge_to = challengeTo
+        self.challenge_from = challengeFrom
+        self.start_time = startTime
 
 class Client(ConnectionListener):
     def __init__(self, host, port):
         self.Connect((host, port))
-        self.pendingChallenge = None
-        self.rejectedChallenge = None
-        self.hasCurrentGame = False
-        self.possibleMoves = None
+        self.pending_challenge = None
+        self.rejected_challenge = None
+        self.has_current_game = False
+        self.possible_moves = None
         self.board = None
 
     def Network(self, data):
@@ -65,35 +65,32 @@ class Client(ConnectionListener):
     # When the server sends the list of players, display possible
     # players on the screen
     def Network_getPlayers(self, data):
-        self.otherPlayers = list(filter(lambda x: x != str(self.id), data['players']))
+        self.other_players = list(filter(lambda x: x != str(self.id), data['players']))
 
-    def sendChallenge(self, otherPlayerId):
-        self.pendingChallenge = PendingChallenge(otherPlayerId, self.id, datetime.now())
+    def send_challenge(self, otherPlayerId):
+        self.pending_challenge = PendingChallenge(otherPlayerId, self.id, datetime.now())
         connection.Send({"action": "getChallenge", "id": self.id, "otherPlayer": int(otherPlayerId)})
 
     # When receiving a challenge from another player, display the challenger on the screen
     def Network_getChallenge(self, data):
-        if not self.pendingChallenge:
-            self.pendingChallenge = PendingChallenge(self.id, data['otherPlayerId'], datetime.now())
+        if not self.pending_challenge:
+            self.pending_challenge = PendingChallenge(self.id, data['otherPlayerId'], datetime.now())
             print(str(data['otherPlayerId']) + " has invited you to a challenge\n")
 
-    def respondToChallenge(self, response):
-        print("in client's respond to challenge")
-        print(str(self.id))
-        print(str(self.pendingChallenge.challengeFrom))
-        print(type(self.pendingChallenge.challengeFrom))
-        connection.Send({"action": "getResponseToChallenge", "id": self.id, "response": response, "otherPlayer": self.pendingChallenge.challengeFrom})
+    def respond_to_challenge(self, response):
+        connection.Send({"action": "getResponseToChallenge", "id": self.id, "response": response, "otherPlayer": self.pending_challenge.challenge_from})
+        self.pending_challenge = None
 
     def Network_rejectChallenge(self, data):
-        self.pendingChallenge = None
-        self.rejectedChallenge = data['playerId']
+        self.pending_challenge = None
+        self.rejected_challenge = data['playerId']
 
     def Network_acceptChallenge(self, data):
-        self.pendingChallenge = None
-        self.hasCurrentGame = True
+        self.pending_challenge = None
+        self.has_current_game = True
 
     def acknowledge_rejected_challenge(self):
-        self.rejectedChallenge = None
+        self.rejected_challenge = None
         print("rejected challenge is now none.")
 
     # These methods deal with the checkers game.
@@ -105,20 +102,17 @@ class Client(ConnectionListener):
         self.board = data['game']
         if "possibleMoves" in data:
             print("got the possible moves")
-            self.possibleMoves = data['possibleMoves']
+            self.possible_moves = data['possibleMoves']
         else:
-            self.possibleMoves = None
+            self.possible_moves = None
 
     def Network_gameEnd(self, data):
         self.gameOver = True
         self.winner = data['winner']
-        self.hasCurrentGame = False
+        self.has_current_game = False
 
-    def sendResponse(self, move):
-        print("going to send a response")
-        print(move)
-        connection.Send({"action": "updateBoard", "move": move, "id": self.id})
-        # self.pump()
+    def update_game_state_with_move(self, start_row, start_column, end_row, end_column):
+        connection.Send({"action": "updateBoard", "move": {"startRow": start_row, "startColumn": start_column, "endRow": end_row, "endCol": end_column}, "id": self.id})
 
     # This method deals with the chat room.
     def Network_message(self, data):
@@ -129,8 +123,8 @@ class Client(ConnectionListener):
 
     def pump(self):
         # Clear pending challenge if the challenge has timed out.
-        if self.pendingChallenge and (datetime.now() - self.pendingChallenge.startTime).seconds >= 60:
-            self.pendingChallenge = None
+        if self.pending_challenge and (datetime.now() - self.pending_challenge.start_time).seconds >= 60:
+            self.pending_challenge = None
         self.Loop()
 
 def startClient():

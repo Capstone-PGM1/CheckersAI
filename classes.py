@@ -5,7 +5,7 @@ import sys
 # lives in each Cell on the board
 class Piece(object):
     def __init__(self, color, king=False):
-        self.color = color  # 0 is red, 1 is white, 2 is Empty
+        self.color = color  # 0 is red, 1 is black, 2 is Empty
         self.king = king
 
 
@@ -263,7 +263,7 @@ class GameState(object):
                 new_m.append_legal_jump(all_paths)
                 return
             new_state = copy.deepcopy(self)
-            new_state.update_game_state_with_move(LegalMove(e_row, e_column, 1, move))
+            new_state.update_game_state_with_move_helper(LegalMove(e_row, e_column, 1, move))
             new_state.calculate_legal_jumps(e_row, e_column, piece_number + 1, c_path + move, all_paths)
 
         not_returning = True
@@ -316,7 +316,7 @@ class GameState(object):
                                 self.board[row][column].possibleMoves.clear()
 
     # updates the GameState with LegalMove - "moves" the pieces, removes "taken" pieces
-    def update_game_state_with_move(self, legal_move: LegalMove):
+    def update_game_state_with_move_helper(self, legal_move: LegalMove):
         if len(legal_move.moves) > 0:
             start_row = legal_move.moves[0].fromRow
             start_column = legal_move.moves[0].fromColumn
@@ -336,6 +336,15 @@ class GameState(object):
                 self.emptyMoves = self.emptyMoves + 1
         else:
             print("BIG ERROR: legal_move doesn't have any moves in it")
+
+
+    # Ignores invalid moves. If move is valid, the game is updated, and the board is ready for the next player.
+    def update_game_state_with_move(self, start_row, start_column, end_row, end_column):
+        for possibleMove in self.board[start_row][start_column].possibleMoves:
+            if end_column == possibleMove.endColumn and end_row == possibleMove.endRow:
+                self.update_game_state_with_move_helper(possibleMove)
+                self.switch_player()
+                self.get_all_legal_moves()
 
     # checks if the game is over with win condition
     # returns color of the winner or 2 - if game is not over
@@ -462,7 +471,7 @@ class GameState(object):
                     if self.board[row][column].piece.color == self.activePlayer:
                         for move in self.board[row][column].possibleMoves:
                             state_copy = copy.deepcopy(self)
-                            state_copy.update_game_state_with_move(move)
+                            state_copy.update_game_state_with_move_helper(move)
                             state_copy.switch_player()
                             state_copy.get_all_legal_moves()
                             new_val, m = state_copy.minimax_alphabeta(depth - 1, alpha, beta, False)
@@ -482,7 +491,7 @@ class GameState(object):
                     if self.board[row][column].piece.color == self.activePlayer:
                         for move in self.board[row][column].possibleMoves:
                             state_copy = copy.deepcopy(self)
-                            state_copy.update_game_state_with_move(move)
+                            state_copy.update_game_state_with_move_helper(move)
                             state_copy.switch_player()
                             state_copy.get_all_legal_moves()
                             new_val, m = state_copy.minimax_alphabeta(depth - 1, alpha, val, True)

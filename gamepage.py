@@ -1,723 +1,467 @@
-import pygame, sys, time
-from tiles import *
-from classes import *
+"""
+For game window resizing uses code from:
+https://github.com/Mekire/pygame-samples/blob/master/resizable/resizable_aspect_ratio.py
+"""
+
+from graphics_helpers import *
 from client import *
 
-pygame.init()
-pygame.font.init()
-
-window = pygame.display.set_mode((1200,900))
-
-clock = pygame.time.Clock()
-currSec = 0
-currFrame = 0
-FPS = 0
-tile_size = 80
-w = 80
-myClient = None
-
-light_green = (83, 249, 88)
-black_color = (0, 0, 0)
-black_outline = (50, 47, 47)
-red_color = (255, 0, 0)
-red_outline = (181, 13, 13)
-gold_color = (233, 218, 10)
-gold_outline = (216, 171, 23)
-tan_color = (242, 221, 179)
-tan_highlight = (242, 235, 222)
-
-# create the background
-wood = pygame.image.load("wood.jpg")
-wood = pygame.transform.scale(wood, (1200, 900))
-Wood = pygame.Surface(wood.get_size(), pygame.HWSURFACE)
-Wood.blit(wood, (0, 0))
-del wood
-
-grid = [[1]*16 for n in range(16)]
-mouseX, mouseY = pygame.mouse.get_pos()
-
-def draw_grid():
-	# r, c = 1, 1
-	# grid_map = []
-	x, y = -30, -30
-	for row in grid:
-		for col in row:
-			pygame.draw.rect(window, black_color, (x, y, w, w), 1)
-			x = x + w
-			# grid_map.append((r, c))
-			# c += 1
-		y = y + w
-		x = -30
-		# r += 1
-		# c = 1
-	# return grid_map
-	window.blit(Wood, (0, 0))
-
-# create game window - will make maximize button later
-def create_window():
-	global window, window_height, window_width, window_title
-	window_width, window_height = 1200, 900
-	window_title = "Checkers"
-	pygame.display.set_caption(window_title)
-	# hardeware/doublebug mode to make things smoother
-	window = pygame.display.set_mode((window_width, window_height), pygame.HWSURFACE|pygame.DOUBLEBUF)
-
-def load_white_tiles(lower1, upper1, lower2, upper2, n):
-	for i in range(n):
-		for x in range(lower1, upper1, tile_size):
-			for y in range(lower2, upper2 , tile_size):
-				window.blit(Tiles.whiteTile, (x, y))
-				pygame.draw.rect(window, black_color, (x, y, tile_size, tile_size), 1)
-			lower1 += 80
-			upper1 += 80
-			lower2 += 80
-			upper2 += 80
-
-def load_grey_tiles(lower1, upper1, lower2, upper2, n):
-	for i in range(n):
-		for x in range(lower1, upper1, tile_size):
-			for y in range(lower2, upper2 , tile_size):
-				window.blit(Tiles.greyTile, (x, y))
-				pygame.draw.rect(window, black_color, (x, y, tile_size, tile_size), 1)
-			lower1 += 80
-			upper1 += 80
-			lower2 += 80
-			upper2 += 80
-
-def load_board():
-	# draw grey tiles
-	draw_grid()
-
-	lower = 130
-	upper = 210
-
-	for i in range(8):
-		for x in range(lower, upper, tile_size):
-			for y in range(lower, upper , tile_size):
-				window.blit(Tiles.greyTile, (x, y))
-				pygame.draw.rect(window, black_color, (x, y, tile_size, tile_size), 1)
-			lower += 80
-			upper += 80
-
-	lower1, upper1, lower2, upper2, = 290, 370, 130, 210
-	load_grey_tiles(lower1, upper1, lower2, upper2, 6)
-
-	lower1, upper1, lower2, upper2, =  450, 530, 130, 210
-	load_grey_tiles(lower1, upper1, lower2, upper2, 4)
-
-	lower1, upper1, lower2, upper2, = 610, 692, 130, 210
-	load_grey_tiles(lower1, upper1, lower2, upper2, 1)
-
-	lower1, upper1, lower2, upper2, = 130, 210, 290, 370
-	load_grey_tiles(lower1, upper1, lower2, upper2, 6)
-
-	lower1, upper1, lower2, upper2, = 130, 210, 450, 530
-	load_grey_tiles(lower1, upper1, lower2, upper2, 4)
-
-	lower1, upper1, lower2, upper2, = 130, 210, 610, 690
-	load_grey_tiles(lower1, upper1, lower2, upper2, 2)
-
-	#draw white tiles
-	lower1, upper1, lower2, upper2, = 210, 290, 130, 210
-	load_white_tiles(lower1, upper1, lower2, upper2, 7)
-
-	lower1, upper1, lower2, upper2, =  370, 450, 130, 210
-	load_white_tiles(lower1, upper1, lower2, upper2, 5)
-
-	lower1, upper1, lower2, upper2, = 530, 610, 130, 210
-	load_white_tiles(lower1, upper1, lower2, upper2, 3)
-
-	lower1, upper1, lower2, upper2, = 690, 770, 130, 210
-	load_white_tiles(lower1, upper1, lower2, upper2, 1)
-
-	lower1, upper1, lower2, upper2, = 130, 210, 210, 290
-	load_white_tiles(lower1, upper1, lower2, upper2, 7)
-
-	lower1, upper1, lower2, upper2, = 130, 210, 370, 450
-	load_white_tiles(lower1, upper1, lower2, upper2, 5)
-
-	lower1, upper1, lower2, upper2, = 130, 210, 530, 610
-	load_white_tiles(lower1, upper1, lower2, upper2, 3)
-
-	lower1, upper1, lower2, upper2, = 130, 210, 690, 770
-	load_white_tiles(lower1, upper1, lower2, upper2, 1)
-
-# game border
-	for x in range(110, 130, 20):
-		for y in range(130, 770 , 20):
-			window.blit(Tiles.blackTile, (x, y))
-
-	for x in range(770, 790, 20):
-		for y in range(130, 770 , 20):
-			window.blit(Tiles.blackTile, (x, y))
-
-	for x in range(110, 790, 20):
-		for y in range(110, 130 , 20):
-			window.blit(Tiles.blackTile, (x, y))
-
-	for x in range(110, 790, 20):
-		for y in range(770, 790 , 20):
-			window.blit(Tiles.blackTile, (x, y))
 
 class Pieces(object):
-
-	def draw_pieces(self, board, possible_moves, selected):
-		# TODO: this always shows black on the bottom of the screen.
-		for item in board:
-			is_possible = (item[0], item[1]) in possible_moves
-			is_selected = True if selected == item else False
-			color = 'red' if board[item] == 'r' or board[item] == 'R' else 'black'
-			is_king = True if board[item] == 'R' or board[item] == 'B' else False
-			if board[item] != '.' and board[item] != '_':
-				availableMoves = possible_moves[item] if is_selected else []
-				self.draw_piece(color, item[0], item[1], is_possible, is_king, is_selected, availableMoves)
-
-	def draw_piece(self, piece_color, row, col, is_possible, is_king, is_selected, availableMoves):
-		outline = red_outline if piece_color == 'red' else black_outline
-		color = red_color if piece_color == 'red' else black_color
-		yPos = row * 80 + 170
-		xPos = col * 80 + 170
-		pygame.draw.circle(window, outline, (xPos, yPos), 37, 37)
-		pygame.draw.circle(window, color, (xPos, yPos), 30, 30)
-
-		if is_possible:
-			pygame.draw.circle(window, light_green, (xPos, yPos), 38, 2)
-		if is_selected:
-			pygame.draw.circle(window, gold_outline, (xPos, yPos), 38, 2)
-			for move in availableMoves:
-				nextX = move['endRow'] * 80 + 170
-				nextY = move['endColumn'] * 80 + 170
-				pygame.draw.circle(window, gold_outline, (nextY, nextX), 38, 2)
-		if is_king:
-			crown = pygame.image.load("king.png").convert_alpha()
-			window.blit(crown, (xPos - 27, yPos - 17))
-
-def load_chatbox(gamestate):
-	if gamestate == 1:
-
-		for x in range(875, 1095, tile_size):
-			for y in range(280, 630 , tile_size):
-				window.blit(Tiles.tanTile, (x, y))
-
-		pygame.draw.rect(window, (108, 64, 7), [875, 580, 240, 100], 3)
-	else:
-		return
-
-def king_piece(gamePiece, position):
-	xPos, yPos = position
-	window.blit(crown, (xPos - 27, yPos - 17))
-
-def button(msg, x, y, w, h, ic, ac, action = None):
-	global myClient
-	cur = pygame.mouse.get_pos()
-	click = pygame.mouse.get_pressed()
-	if x + w > cur[0] > x and y + h > cur[1] > y:
-		pygame.draw.rect(window, ac, (x, y, w, h))
-		if click[0] == 1 and action != None:
-			if action == "quit":
-				pygame.quit()
-				sys.exit()
-
-			if action == "soundOn":
-				pass
-
-			if action == "soundOff":
-				pass
-
-			if action == "challenge" and myClient:
-				myClient.sendChallenge(msg)
-
-			if action == 'listOnline':
-				if not myClient:
-					myClient = startClient()
-					myClient.pump()
-
-			if action == "player1":
-				loadOnePlayerPage()
-
-			if action == "player2":
-				loadTwoPlayerPage()
-
-			if action == "settings":
-				loadSettingsPage()
-
-			if action == "PlayOnline":
-				print("clicked play online")
-
-			if action == "LocalGame":
-				gameLoop(False)
-
-			if action == "p1":
-				print("In action p1")
-
-			if action == "p2":
-				print("In action p2")
-
-			# game loop for one player
-			if action == "main1":
-				gameLoop(True)
-
-			if action == "acceptChallenge":
-				myClient.respondToChallenge(True)
-
-			if action == "rejectChallenge":
-				myClient.respondToChallenge(False)
-
-			#game loop for two player
-			if action == "main2":
-				# add parameters to gameLoop for AI
-				gameLoop(False)
-
-			if action == "home":
-				game_intro()
-	else:
-		pygame.draw.rect(window, ic, (x, y, w, h))
-	# text_to_button(text, black, x, y, w, h)
-
-def renderText(fontSize, message, color, position):
-	myfont = pygame.font.SysFont('Comic Sans MS', fontSize)
-	textsurface = myfont.render(message, False, color)
-	window.blit(textsurface, position)
-
-def loadLogo():
-	pygame.draw.circle(window, black_outline, (900, 300), 180, 180)
-	pygame.draw.circle(window, black_color, (900, 300), 160, 160)
-	pygame.draw.circle(window, red_outline, (700, 300), 180, 180)
-	pygame.draw.circle(window, red_color, (700, 300), 160, 160)
-	pygame.draw.circle(window, black_outline, (500, 300), 180, 180)
-	pygame.draw.circle(window, black_color, (500, 300), 160, 160)
-	pygame.draw.circle(window, red_outline, (300, 300), 180, 180)
-	pygame.draw.circle(window, red_color, (300, 300), 160, 160)
-	renderText(200, "Checkers", gold_color, (300, 230))
-
-def loadGamePage():
-# draw checkers board
-	black = 1
-	red = 0
-	online = 1
-	offline = 0
-	load_board()
-	button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'settings')
-	renderText(30, "Settings", black_color, (1100, 30))
-	button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
-	renderText(30, "Quit", black_color, (1115, 860))
-	# player_color(black)
-	load_chatbox(online)
-
-def loadPlayerChoicePage():
-	loadLogo()
-	button("player1", 250, 600, 300, 60, tan_color, tan_highlight, 'player1')
-	renderText(60, "1-Player", black_color, (320, 610))
-	button("player2", 650, 600, 300, 60, tan_color, tan_highlight, 'player2')
-	renderText(60, "2-Player", black_color, (720, 610))
-	button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
-	renderText(30, "Quit", black_color, (1115, 860))
-	button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'settings')
-	renderText(30, "Settings", black_color, (1100, 30))
-
-def loadLoginPage():
-	loadLogo()
-	button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'settings')
-	renderText(30, "Settings", black_color, (1100, 30))
-	button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
-	renderText(30, "Quit", black_color, (1115, 860))
-	pygame.draw.rect(window, tan_color, [450, 600, 300, 40])
-	renderText(30, "Username", black_color, (450, 580))
-	pygame.draw.rect(window, tan_color, [450, 680, 300, 40])
-	renderText(30, "Password", black_color, (450, 660))
-
-def loadOnePlayerPage():
-	gcont = True
-
-	while gcont:
-		for event in pygame.event.get():
-				#print(event)
-				if event.type == pygame.QUIT:
-					pygame.quit()
-					quit()
-		window.blit(Wood, (0, 0))
-		pygame.draw.rect(window, tan_color, [200, 50, 800, 200])
-		renderText(150, "New Game", black_color, (340, 100))
-		button("easy", 450, 300, 300, 60, tan_color, tan_highlight, 'main1')
-		renderText(60, "Easy", black_color, (545, 310))
-		button("medium", 450, 410, 300, 60, tan_color, tan_highlight, 'main1')
-		renderText(60, "Medium", black_color, (520, 420))
-		button("hard", 450, 520, 300, 60, tan_color, tan_highlight, 'main1')
-		renderText(60, "Hard", black_color, (545, 530))
-
-		renderText(60, "Select color", black_color, (480, 650))
-
-		pygame.draw.circle(window, red_outline, (530, 770), 60, 60)
-		pygame.draw.circle(window, red_color, (530, 770), 50, 50)
-		pygame.draw.circle(window, black_outline, (670, 770), 60, 60)
-		pygame.draw.circle(window, black_color, (670, 770), 50, 50)
-
-		button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'settings')
-		renderText(30, "Settings", black_color, (1100, 30))
-		button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
-		renderText(30, "Quit", black_color, (1115, 860))
-		pygame.display.update()
-		clock.tick(15)
-
-def loadTwoPlayerPage():
-	gcont = True
-
-	while gcont:
-		for event in pygame.event.get():
-				#print(event)
-				if event.type == pygame.QUIT:
-					# if myClient:
-					# 	myClient.closeConnection()
-					pygame.quit()
-					quit()
-				if myClient:
-					myClient.pump()
-
-		window.blit(Wood, (0, 0))
-		pygame.draw.rect(window, tan_color, [200, 50, 800, 200])
-		renderText(150, "New Game", black_color, (340, 100))
-		button("LocalGame", 200, 300, 300, 60, tan_color, tan_highlight, 'main2')
-		renderText(60, "Local Game", black_color, (230, 310))
-		button("PlayOnline", 700, 300, 300, 60, tan_color, tan_highlight, 'PlayOnline')
-		renderText(60, "Play Online", black_color, (740, 310))
-		button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
-		renderText(30, "Quit", black_color, (1115, 860))
-		button("settings", 1090, 20, 100, 40, tan_color, tan_highlight, 'settings')
-		renderText(30, "Settings", black_color, (1100, 30))
-
-		pygame.draw.rect(window, tan_color, [700, 400, 300, 250])
-		if myClient and hasattr(myClient, "otherPlayers"):
-			xNum = 700
-			yNum = 400
-			for player in myClient.otherPlayers:
-				# I need to be able to make a button for each player too.
-				button(player, xNum, yNum, 300, 60, tan_color, tan_highlight, "challenge")
-				renderText(60, player, black_color, (xNum, yNum))
-				yNum += 50
-		else:
-			button("Find online players.", 700, 400, 300, 60, tan_color, tan_highlight, "listOnline")
-			renderText(60, "Find online players.", black_color, (700, 400))
-
-		if myClient and myClient.hasCurrentGame:
-			loadGamePage()
-			gameLoop(False)
-
-		if myClient and myClient.rejectedChallenge:
-			button(
-			"Your challenge to " + str(myClient.rejectedChallenge) + " was rejected.",
-			xNum, yNum + 150, 300, 60, tan_color, tan_highlight, 'main2')
-			renderText(60, "challenge rejected", black_color, (xNum, 660))
-			myClient.acknowledge_rejected_challenge()
-
-		if myClient and myClient.pendingChallenge:
-			if myClient.pendingChallenge.challengeTo == myClient.id:
-				button("player1", 420, 800, 150, 40, tan_color, tan_highlight, 'acceptChallenge')
-				renderText(40, "Accept", black_color, (450, 805))
-				button("player2", 630, 800, 150, 40, tan_color, tan_highlight, 'rejectChallenge')
-				renderText(40, "Decline", black_color, (655, 805))
-			else:
-				button("Sent challenge to " + str(myClient.pendingChallenge.challengeTo), xNum, yNum + 100, 300, 60, tan_color, tan_highlight, 'main2')
-				renderText(30, "Waiting for player to respond...", black_color, (xNum, 660))
-		pygame.display.update()
-		clock.tick(15)
-
-def loadWinPage(color):
-	gcont = True
-
-	while gcont:
-		for event in pygame.event.get():
-				#print(event)
-				if event.type == pygame.QUIT:
-					# if myClient:
-					# 	myClient.closeConnection()
-					pygame.quit()
-					quit()
-		move = 80
-		if color == 1:
-			winnerColor1 = red_outline
-			winnerColor2 = red_color
-		else:
-			winnerColor1 = black_outline
-			winnerColor2 = black_color
-		button("home", 950, 700, 300, 300, tan_color, tan_highlight, 'home')
-		window.blit(Wood, (0, 0))
-		pygame.draw.circle(window, winnerColor1, (100, 100), 90, 90)
-		pygame.draw.circle(window, winnerColor2, (100, 100), 80, 80)
-		pygame.draw.circle(window, winnerColor1, (1100, 100), 90, 90)
-		pygame.draw.circle(window, winnerColor2, (1100, 100), 80, 80)
-		pygame.draw.circle(window, winnerColor1, (100, 800), 90, 90)
-		pygame.draw.circle(window, winnerColor2, (100, 800), 80, 80)
-		pygame.draw.circle(window, winnerColor1, (1100, 800), 90, 90)
-		pygame.draw.circle(window, winnerColor2, (1100, 800), 80, 80)
-		renderText(50, "Play", gold_color, (1060, 760))
-		renderText(50, "Again", gold_color, (1050, 800))
-
-		pygame.draw.circle(window, gold_outline, (300, 800), 60, 60)
-		pygame.draw.circle(window, gold_color, (300, 800), 50, 50)
-		pygame.draw.circle(window, gold_outline, (450, 800), 60, 60)
-		pygame.draw.circle(window, gold_color, (450, 800), 50, 50)
-		pygame.draw.circle(window, gold_outline, (600, 800), 60, 60)
-		pygame.draw.circle(window, gold_color, (600, 800), 50, 50)
-		pygame.draw.circle(window, gold_outline, (750, 800), 60, 60)
-		pygame.draw.circle(window, gold_color, (750, 800), 50, 50)
-		pygame.draw.circle(window, gold_outline, (900, 800), 60, 60)
-		pygame.draw.circle(window, gold_color, (900, 800), 50, 50)
-
-		pygame.draw.circle(window, gold_outline, (300 + move, 650), 60, 60)
-		pygame.draw.circle(window, gold_color, (300 + move, 650), 50, 50)
-		pygame.draw.circle(window, gold_outline, (450 + move, 650), 60, 60)
-		pygame.draw.circle(window, gold_color, (450 + move, 650), 50, 50)
-		pygame.draw.circle(window, gold_outline, (600 + move, 650), 60, 60)
-		pygame.draw.circle(window, gold_color, (600 + move, 650), 50, 50)
-		pygame.draw.circle(window, gold_outline, (750 + move, 650), 60, 60)
-		pygame.draw.circle(window, gold_color, (750 + move, 650), 50, 50)
-
-		pygame.draw.circle(window, gold_outline, (450, 500), 60, 60)
-		pygame.draw.circle(window, gold_color, (450, 500), 50, 50)
-		pygame.draw.circle(window, gold_outline, (600, 500), 60, 60)
-		pygame.draw.circle(window, gold_color, (600, 500), 50, 50)
-		pygame.draw.circle(window, gold_outline, (750, 500), 60, 60)
-		pygame.draw.circle(window, gold_color, (750, 500), 50, 50)
-
-		pygame.draw.circle(window, gold_outline, (450 + move, 350), 60, 60)
-		pygame.draw.circle(window, gold_color, (450 + move, 350), 50, 50)
-		pygame.draw.circle(window, gold_outline, (600 + move, 350), 60, 60)
-		pygame.draw.circle(window, gold_color, (600 + move, 350), 50, 50)
-
-		pygame.draw.circle(window, gold_outline, (600, 200), 60, 60)
-		pygame.draw.circle(window, winnerColor2, (600, 200), 50, 50)
-
-		renderText(200, "You Win!", gold_color, (300, 20))
-
-		pygame.display.update()
-		clock.tick(15)
-
-def loadSettingsPage():
-	gcont = True
-
-	while gcont:
-		for event in pygame.event.get():
-				# if myClient:
-				# 	myClient.closeConnection()
-				if event.type == pygame.QUIT:
-					pygame.quit()
-					quit()
-		window.blit(Wood, (0, 0))
-		pygame.draw.rect(window, tan_color, [200, 50, 800, 200])
-		renderText(150, "Settings", black_color, (340, 100))
-		renderText(50, "Prefered color", black_color, (470, 650))
-
-		button("quit", 1090, 850, 100, 40, tan_color, tan_highlight, 'quit')
-		renderText(30, "Quit", black_color, (1115, 860))
-
-		pygame.draw.circle(window, red_outline, (530, 770), 60, 60)
-		pygame.draw.circle(window, red_color, (530, 770), 50, 50)
-		pygame.draw.circle(window, black_outline, (670, 770), 60, 60)
-		pygame.draw.circle(window, black_color, (670, 770), 50, 50)
-
-		button("soundOn", 200, 300, 100, 60, tan_color, tan_highlight, 'soundOn')
-		renderText(25, "Sound On", black_color, (205, 310))
-		button("soundOff", 350, 300, 100, 60, tan_color, tan_highlight, 'soundOff')
-		renderText(25, "Sound Off", black_color, (355, 310))
-		button("listOnline", 700, 300, 300, 60, tan_color, tan_highlight, 'listOnline')
-		renderText(40, "List me online", black_color, (740, 310))
-
-		button("2 player page", 700, 375, 300, 60, tan_color, tan_highlight, 'player2')
-		renderText(40, "2 player page", black_color, (740, 410))
-
-		# button("medium", 450, 410, 300, 60, (0, 0, 0), 'main1')
-		pygame.draw.rect(window, (tan_color), (450, 475, 300, 60))
-		renderText(50, "Update Username", black_color, (460, 440))
-
-		pygame.draw.rect(window, (tan_color), (450, 585, 300, 60))
-		renderText(50, "Update Password", black_color, (460, 550))
-
-		pygame.display.update()
-		clock.tick(15)
-
-def game_intro():
-
-	intro = True
-
-	# Render Graphics
-	while intro:
-		for event in pygame.event.get():
-				if event.type == pygame.QUIT:
-					pygame.quit()
-					quit()
-
-				if event.type == pygame.KEYDOWN:
-					if event.key == pygame.K_c:
-						intro = False
-					elif event.key == pygame.K_q:
-
-						pygame.quit()
-						quit()
-		window.blit(Wood, (0, 0))
-
-
-		loadLogo()
-		loadPlayerChoicePage()
-
-
-		pygame.display.update()
-
-		clock.tick(15)
-
-def check_win(game):
-	if game.is_game_over():
-		if game.is_draw():
-			print("The game is a draw.")
-		else:
-			winningPlayer = 'red' if game.is_win() == 0 else 'black'
-			if (winningPlayer == 'red'):
-				window.blit(Wood, (0, 0))
-				loadWinPage(1)
-			else:
-				window.blit(Wood, (0, 0))
-				loadWinPage(0)
-		return True
-	return False
-
-def gameLoop(use_AI):
-	gameExit = False
-	gameOver = False
-	FPS = 15
-
-	while not gameExit:
-		global myClient
-		isRunning = True
-		# mx, my = pygame.mouse.get_pos()
-		initialClick = None
-		piece = Pieces()
-		game = GameState()
-		game.get_all_legal_moves()
-		loadGamePage()
-		pygame.display.flip()
-		while isRunning:
-			# this is the AI's turn.
-			if use_AI and game.activePlayer == 1:
-				initialClick = None
-				game.update_game_state_with_move(game.get_ai_move())
-				game.switch_player()
-				game.get_all_legal_moves()
-				if check_win(game):
-					isRunning = False
-					break
-			# networked version
-			elif myClient and myClient.hasCurrentGame:
-				# If it's the current player's turn
-				myClient.pump()
-				if myClient.possibleMoves:
-					possible_moves = myClient.possibleMoves
-					events = pygame.event.get()
-					for event in events:
-						if event.type == pygame.QUIT:
-							# TODO: delete game then.
-							isRunning = False
-							pygame.quit()
-							sys.exit()
-						elif event.type == pygame.MOUSEBUTTONDOWN:
-							col = ((pos[0] - 50) // 80) - 1
-							row = ((pos[1] - 50) // 80) - 1
-							print(row, col)
-
-							if initialClick and initialClick in possible_moves:
-								made_move = False
-								print(possible_moves)
-								for possibleMove in possible_moves[initialClick]:
-
-									print("possibleMoveValue: {}. type: {}".format(possibleMove, type(possibleMove)))
-									# print("possible row: {}, col: {}".format(possibleMove['e', possibleMove[1]))
-									# print("received row: {}, col: {}".format(row, col))
-
-									if row == possibleMove['endRow'] and col == possibleMove['endColumn']:
-										print(
-											"trying to move from " + str(initialClick) + " to (" + str(row) + ", " + str(col) + ")")
-										myClient.sendResponse({
-											"startRow": initialClick[0],
-											"startColumn": initialClick[1],
-											"endRow": row,
-											"endCol": col})
-										initialClick = None
-									# else:
-									# 	print("move doesn't work")
-									# 	# initialClick = None
-								if not made_move:
-									print("cannot move from {} to ({}, {})".format(str(initialClick), row, col))
-									initialClick = None
-							# Debug prints
-							if (row, col) in possible_moves:
-								initialClick = (row, col)
-
-						pos = pygame.mouse.get_pos()
-
-				for event in pygame.event.get():
-
-					if event.type == pygame.QUIT:
-						gameExit = True
-				# Render Graphics
-				window.blit(Wood, (0, 0))
-
-				loadGamePage()
-				# Update board
-				possible_moves = myClient.possibleMoves if myClient.possibleMoves else {}
-				piece.draw_pieces(myClient.board, possible_moves, initialClick)
-
-				pygame.display.flip()
-				clock.tick(FPS)
-			# get the move from the board.
-			else:
-				possible_moves = game.send_possible_moves_for_network()
-				events = pygame.event.get()
-				for event in events:
-					if event.type == pygame.QUIT:
-						isRunning = False
-						pygame.quit()
-						sys.exit()
-					elif event.type == pygame.MOUSEBUTTONDOWN:
-						col = ((pos[0] - 50)// 80) - 1
-						row = ((pos[1] - 50) // 80) - 1
-						print(row, col)
-
-						if initialClick:
-							made_move = False
-							for possibleMove in game.board[initialClick[0]][initialClick[1]].possibleMoves:
-								if row == possibleMove.endRow and col == possibleMove.endColumn:
-									print("moved from " + str(initialClick) + " to (" + str(row) + ", " + str(col) + ")")
-									made_move = True
-									game.update_game_state_with_move(possibleMove)
-									game.switch_player()
-									game.get_all_legal_moves()
-
-									if check_win(game):
-										isRunning = False
-										break
-							if not made_move:
-								print("cannot move from " + str(initialClick) + " to (" + str(row) + ", "+ str(col) + ")")
-								initialClick = None
-
-						if (row, col) in possible_moves:
-							initialClick = (row, col)
-
-					pos = pygame.mouse.get_pos()
-
-					for event in pygame.event.get():
-
-						if event.type == pygame.QUIT:
-							gameExit = True
-
-				loadGamePage()
-				# # Update board
-				piece.draw_pieces(game.get_board_for_network(), game.send_possible_moves_for_network(), initialClick)
-
-				pygame.display.flip()
-				clock.tick(FPS)
-	pygame.quit()
-	quit()
-
-if __name__ == '__main__':
-
-	game_intro()
-
-	gameLoop()
+    def draw_pieces(self, window, board, possible_moves, selected):
+        # TODO: this always shows black on the bottom of the screen.
+        for item in board:
+            is_possible = (item[0], item[1]) in possible_moves
+            is_selected = True if selected == item else False
+            color = 'red' if board[item] == 'r' or board[item] == 'R' else 'black'
+            is_king = True if board[item] == 'R' or board[item] == 'B' else False
+            if board[item] != '.' and board[item] != '_':
+                available_moves = possible_moves[item] if is_selected and item in possible_moves else []
+                self.draw_piece(window, color, item[0], item[1], is_possible, is_king, is_selected, available_moves)
+
+    def draw_piece(self, window, piece_color, row, col, is_possible, is_king, is_selected, available_moves):
+        outline = red_outline if piece_color == 'red' else black_outline
+        color = red_color if piece_color == 'red' else black_color
+        # These numbers are hard coded, but the pieces render correctly for different sizes for me.
+        y_pos = row * 40 + 85
+        x_pos = col * 40 + 85
+        pg.draw.circle(window, outline, (x_pos, y_pos), 18, 18)
+        pg.draw.circle(window, color, (x_pos, y_pos), 15, 15)
+        if is_possible:
+            pygame.draw.circle(window, light_green, (x_pos, y_pos), 19, 1)
+        if is_selected:
+            pygame.draw.circle(window, gold_outline, (x_pos, y_pos), 19, 1)
+            for move in available_moves:
+                next_x = move['endRow'] * 40 + 85
+                next_y = move['endColumn'] * 40 + 85
+                pygame.draw.circle(window, gold_outline, (next_y, next_x), 19, 1)
+        if is_king:
+            crown = pygame.image.load("king.png").convert_alpha()
+            window.blit(crown, (x_pos - 27, y_pos - 17))
+
+
+class Page(object):
+    def __init__(self):
+        # create the background
+        wood = pg.image.load("wood.jpg")
+        self.background = pg.transform.scale(wood, SCREEN_START_SIZE)
+
+    def settings_quit_btn(self, set_done, set_page):
+        if not isinstance(self, WinPage):
+            self.button("quit", 510, 425, 85, 20, tan_color, tan_highlight, lambda: set_done(True))
+        if not isinstance(self, Settings) and not isinstance(self, WinPage):
+            self.button("settings", 510, 20, 85, 20, tan_color, tan_highlight, lambda: set_page(Settings()))
+
+    def update(self, window: pg.Surface, screen_rect, scale, update_page, update_done, update_client, client):
+        self.screen_rect = screen_rect
+        self.scale = scale
+        self.image = window
+        self.image.blit(self.background, (0, 0))
+
+        self.load_background()
+        self.load_buttons(update_page, update_client, client)
+        self.settings_quit_btn(update_done, update_page)
+
+    def load_background(self):
+        pass
+
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        pass
+
+    # https://pythonprogramming.net/pygame-button-function/?completed=/placing-text-pygame-buttons/
+    def button(self, msg, top_left_x_coordinate, top_left_y_coordinate, width, height, inactive_color, active_color,
+               onClick=None):
+        # TODO: some of the button rectangles are smaller than the words.
+        cur = pg.mouse.get_pos()
+        click = pg.mouse.get_pressed()
+        image_x = self.screen_rect.center[0] - (SCREEN_START_SIZE[0] * self.scale) / 2
+        image_y = self.screen_rect.center[1] - (SCREEN_START_SIZE[1] * self.scale) / 2
+        if (top_left_x_coordinate + width) * self.scale + image_x > cur[
+            0] > top_left_x_coordinate * self.scale + image_x and \
+                            (top_left_y_coordinate + height) * self.scale + image_y > cur[
+                    1] > top_left_y_coordinate * self.scale + image_y:
+            if onClick is not None and msg != "home":
+                render_centered_text_with_background(28, msg, black_color, top_left_x_coordinate, top_left_y_coordinate,
+                                                     width, height,
+                                                     self.image, active_color)
+            if click[0] == 1 and onClick is not None:
+                onClick()
+        else:
+            if onClick is not None and msg != "home":
+                render_centered_text_with_background(28, msg, black_color, top_left_x_coordinate, top_left_y_coordinate,
+                                                     width, height,
+                                                     self.image, inactive_color)
+
+
+class Intro(Page):
+    def load_background(self):
+        draw_black_circle(450, 150, intro_circle_radius, intro_outline_radius, self.image)
+        draw_red_circle(350, 150, intro_circle_radius, intro_outline_radius, self.image)
+        draw_black_circle(250, 150, intro_circle_radius, intro_outline_radius, self.image)
+        draw_red_circle(150, 150, intro_circle_radius, intro_outline_radius, self.image)
+        # TODO: This isn't actually centered. The numbers are wrong.
+        render_centered_text(100, "Checkers", gold_color, 275, 125, intro_circle_radius, intro_outline_radius,
+                             self.image)
+
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        self.button("One Player", 125, 300, 150, 34, tan_color, tan_highlight, lambda: update_page(OnePlayerOptions()))
+        self.button("Two Player", 325, 300, 150, 34, tan_color, tan_highlight, lambda: update_page(TwoPlayerOptions()))
+
+
+class Settings(Page):
+    def load_background(self):
+        # TODO: Update these numbers if necessary
+        render_centered_text_with_background(70, "Settings", black_color, 100, 25, 400, 80, self.image, tan_color)
+        self.image.blit(render_text(25, "Preferred color", black_color)[0], (210, 320))
+
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
+        draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
+        self.button("Sound On", 50, 150, 100, 20, tan_color, tan_highlight, lambda: print("sound is now on"))
+        self.button("Sound Off", 175, 150, 100, 20, tan_color, tan_highlight, lambda: print("sound is now off"))
+        self.button("List Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client())
+        self.button("2 player page", 350, 185, 150, 30, tan_color, tan_highlight,
+                    lambda: update_page(TwoPlayerOptions()))
+        pg.draw.rect(self.image, tan_color, (210, 230, 180, 30))
+
+        self.image.blit(render_text(20, "Update Username", black_color)[0], (215, 230))
+        pg.draw.rect(self.image, tan_color, (210, 270, 180, 30))
+        self.image.blit(render_text(20, "Update Password", black_color)[0], (215, 270))
+
+
+class OnePlayerOptions(Page):
+    def load_background(self):
+        # TODO: update these numbers -- looks good on the Mac.
+        render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
+        self.image.blit(render_text(25, "Select color", black_color)[0], (230, 320))
+
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
+        draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
+        self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True)))
+        self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True)))
+        self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True)))
+
+
+class TwoPlayerOptions(Page):
+    def load_background(self):
+        # TODO: Update the numbers as necessary.
+        render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
+
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        self.button("Local Game", 100, 150, 180, 30, tan_color, tan_highlight, lambda: update_page(GamePage(False)))
+
+        if not client:
+            self.button("Play Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client())
+        else:
+            render_centered_text_with_background(30, "Available players", black_color, 350, 150, 180, 30, self.image,
+                                                 tan_color)
+
+        # TODO: Update the numbers as necessary.
+        xNum = 350
+        yNum = 200
+
+        if client and hasattr(client, "other_players"):
+            pygame.draw.rect(self.image, tan_color, [xNum, yNum, 180, 150])
+            if len(client.other_players) == 0:
+                render_centered_text_with_background(30, "None", black_color, xNum, yNum, 180, 150,
+                                                     self.image, tan_color)
+
+            # TODO: this should scroll.
+            for player in client.other_players:
+                self.button(player, xNum, yNum, 180, 30, tan_color, tan_highlight,
+                            lambda: client.send_challenge(player))
+                yNum += 30
+
+        if client and client.has_current_game:
+            update_page(GamePage(False))
+
+        if client and client.rejected_challenge:
+            # TODO: Ugly way to make sure the message that the challenge was rejected stays on the screen.
+            if hasattr(self, 'timeout'):
+                self.timeout -= 1
+            else:
+                self.timeout = 20
+            if self.timeout == 0:
+                client.acknowledge_rejected_challenge()
+            else:
+                render_centered_text(30, "Your challenge to {} was rejected".format(client.rejected_challenge),
+                                     black_color, xNum, yNum, 75, 20, self.image)
+
+        if client and client.pending_challenge:
+            if client.pending_challenge.challenge_to == client.id:
+                render_centered_text(30, "You have received a challenge from {}".format(
+                    client.pending_challenge.challenge_from), black_color, 100, 370, 400, 20, self.image)
+                self.button("Accept", 210, 400, 75, 20, tan_color, tan_highlight,
+                            lambda: client.respond_to_challenge(True))
+                self.button("Decline", 315, 400, 75, 20, tan_color, tan_highlight,
+                            lambda: client.respond_to_challenge(False))
+            else:
+                render_centered_text(30, "Waiting for player {} to respond.".format(
+                    str(client.pending_challenge.challenge_to)),
+                                     black_color, 100, 370, 400, 20, self.image)
+
+    def __del__(self):
+        if hasattr(self, 'timeout'):
+            self.timeout = 0
+
+
+class GamePage(Page):
+    def __init__(self, ai_game=False):
+        Page.__init__(self)
+        self.initial_click = None
+        self.piece = Pieces()
+        self.gameState = GameState()
+        self.gameState.get_all_legal_moves()
+        self.board = self.gameState.get_board_for_network()
+        self.possible_moves = []
+        self.AIgame = ai_game
+
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        if client and client.has_current_game:
+            self.board = client.board
+            self.possible_moves = client.possible_moves if client.possible_moves else []
+        else:
+            self.board = self.gameState.get_board_for_network()
+            self.possible_moves = self.gameState.send_possible_moves_for_network()
+        self.piece.draw_pieces(self.image, self.board, self.possible_moves, self.initial_click)
+        if self.AIgame and self.gameState.activePlayer == 1:
+            self.gameState.update_game_state_with_move_helper(self.gameState.get_ai_move())
+            self.gameState.switch_player()
+            self.gameState.get_all_legal_moves()
+            is_win = self.check_win()
+            if is_win != -1:
+                update_page(WinPage(is_win))
+
+    def load_background(self):
+        lower = 65
+        upper = 105
+
+        for i in range(8):
+            for x in range(lower, upper, tile_size):
+                for y in range(lower, upper, tile_size):
+                    self.image.blit(Tiles.greyTile, (x, y))
+                    pg.draw.rect(self.image, black_color, (x, y, tile_size, tile_size), 1)
+                lower += 40
+                upper += 40
+
+        lower1, upper1, lower2, upper2, = 145, 185, 65, 105
+        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 6)
+
+        lower1, upper1, lower2, upper2, = 225, 265, 65, 105
+        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 4)
+
+        lower1, upper1, lower2, upper2, = 305, 346, 65, 105
+        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 1)
+
+        lower1, upper1, lower2, upper2, = 65, 105, 145, 185
+        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 6)
+
+        lower1, upper1, lower2, upper2, = 65, 105, 225, 265
+        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 4)
+
+        lower1, upper1, lower2, upper2, = 65, 105, 305, 345
+        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 2)
+
+        # draw white tiles
+        lower1, upper1, lower2, upper2, = 105, 145, 65, 105
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 7)
+
+        lower1, upper1, lower2, upper2, = 185, 225, 65, 105
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 5)
+
+        lower1, upper1, lower2, upper2, = 265, 305, 65, 105
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 3)
+
+        lower1, upper1, lower2, upper2, = 345, 385, 65, 105
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 1)
+
+        lower1, upper1, lower2, upper2, = 65, 105, 105, 145
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 7)
+
+        lower1, upper1, lower2, upper2, = 65, 105, 185, 225
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 5)
+
+        lower1, upper1, lower2, upper2, = 65, 105, 265, 305
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 3)
+
+        lower1, upper1, lower2, upper2, = 65, 105, 345, 385
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 1)
+
+        # game border
+        for x in range(55, 65, 10):
+            for y in range(65, 385, 10):
+                self.image.blit(Tiles.blackTile, (x, y))
+
+        for x in range(385, 395, 10):
+            for y in range(65, 385, 10):
+                self.image.blit(Tiles.blackTile, (x, y))
+
+        for x in range(55, 395, 10):
+            for y in range(55, 65, 10):
+                self.image.blit(Tiles.blackTile, (x, y))
+
+        for x in range(55, 395, 10):
+            for y in range(385, 395, 10):
+                self.image.blit(Tiles.blackTile, (x, y))
+
+        load_chatbox(self.image)
+
+    def check_win(self):
+        if self.gameState.is_game_over():
+            if self.gameState.is_draw():
+                return 2
+            else:
+                return self.gameState.is_win()
+        return -1
+
+    def handleGameClick(self, update_page, client):
+        pos = pygame.mouse.get_pos()
+        image_x = self.screen_rect.center[0] - (SCREEN_START_SIZE[0] * self.scale) / 2
+        image_y = self.screen_rect.center[1] - (SCREEN_START_SIZE[1] * self.scale) / 2
+        col = int((((pos[0] - image_x) / self.scale - 25) // 40) - 1)
+        row = int((((pos[1] - image_y) / self.scale - 25) // 40) - 1)
+        made_move = False
+        game = client if client and client.has_current_game else self.gameState
+
+        if self.initial_click and self.initial_click in self.possible_moves:
+            for possibleMove in self.possible_moves[self.initial_click]:
+                print(possibleMove)
+                if row == possibleMove['endRow'] and col == possibleMove['endColumn']:
+                    print("moved from " + str(self.initial_click) + " to (" + str(row) + ", " + str(col) + ")")
+                    made_move = True
+                    game.update_game_state_with_move(self.initial_click[0], self.initial_click[1], row, col)
+            if not made_move:
+                print("cannot move from " + str(self.initial_click) + " to (" + str(row) + ", " + str(col) + ")")
+                self.initial_click = None
+
+        if (row, col) in self.possible_moves:
+            self.initial_click = (row, col)
+        if made_move:
+            is_win = self.check_win()
+            if is_win != -1:
+                update_page(WinPage(is_win))
+
+
+# TODO: add a 'replay' button?
+class WinPage(Page):
+    def __init__(self, winner):
+        Page.__init__(self)
+        self.winner = winner
+
+    def load_background(self):
+        if self.winner == 2:
+            winnerColor1 = gold_outline
+            winnerColor2 = gold_color
+        elif self.winner == 0:
+            winnerColor1 = red_outline
+            winnerColor2 = red_color
+        else:
+            winnerColor1 = black_outline
+            winnerColor2 = black_color
+        draw_circle(50, 50, winnerColor2, winnerColor1, 40, 45, self.image)
+        draw_circle(550, 50, winnerColor2, winnerColor1, 40, 45, self.image)
+        draw_circle(50, 400, winnerColor2, winnerColor1, 40, 45, self.image)
+        draw_circle(550, 400, winnerColor2, winnerColor1, 40, 45, self.image)
+        self.image.blit(render_text(25, "Play", gold_color)[0], (530, 370))
+        self.image.blit(render_text(25, "Again", gold_color)[0], (525, 390))
+
+        draw_circle(150, 400, gold_color, gold_outline, 25, 30, self.image)
+        draw_circle(225, 400, gold_color, gold_outline, 25, 30, self.image)
+        draw_circle(300, 400, gold_color, gold_outline, 25, 30, self.image)
+        draw_circle(375, 400, gold_color, gold_outline, 25, 30, self.image)
+        draw_circle(450, 400, gold_color, gold_outline, 25, 30, self.image)
+
+        draw_circle(190, 325, gold_color, gold_outline, 25, 30, self.image)
+        draw_circle(265, 325, gold_color, gold_outline, 25, 30, self.image)
+        draw_circle(340, 325, gold_color, gold_outline, 25, 30, self.image)
+        draw_circle(415, 325, gold_color, gold_outline, 25, 30, self.image)
+
+        draw_circle(225, 250, gold_color, gold_outline, 25, 30, self.image)
+        draw_circle(300, 250, gold_color, gold_outline, 25, 30, self.image)
+        draw_circle(375, 250, gold_color, gold_outline, 25, 30, self.image)
+
+        draw_circle(265, 175, gold_color, gold_outline, 25, 30, self.image)
+        draw_circle(340, 175, gold_color, gold_outline, 25, 30, self.image)
+
+        pygame.draw.circle(self.image, gold_outline, (300, 100), 30, 30)
+        pygame.draw.circle(self.image, winnerColor2, (300, 100), 25, 25)
+
+        if self.winner == 2:
+            text = "It's a Draw!"
+        # TODO: Update this -- maybe with a name or a color.
+        else:
+            text = "You Win!"
+        self.image.blit(render_text(80, text, gold_color)[0], (150, 5))
+
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        self.button("home", 475, 350, 150, 150, tan_color, tan_highlight, lambda: update_page(Intro()))
+
+
+class ScreenControl(object):
+    def __init__(self):
+        pg.init()
+        pg.display.set_caption(CAPTION)
+        self.screen = pg.display.set_mode(SCREEN_START_SIZE, pg.RESIZABLE)
+        self.screen_rect = self.screen.get_rect()
+        self.image = pg.Surface(SCREEN_START_SIZE).convert()
+        self.image_rect = self.image.get_rect()
+        self.scale = 1
+        self.clock = pg.time.Clock()
+        self.fps = 15.0
+        self.done = False
+        self.keys = pg.key.get_pressed()
+        self.client = None
+        self.page = Intro()
+
+    def screen_event(self):
+        for event in pg.event.get():
+            self.keys = pg.key.get_pressed()
+            if event.type == pg.QUIT or self.keys[pg.K_ESCAPE]:
+                self.done = True
+            elif event.type == pg.VIDEORESIZE:
+                self.screen = pg.display.set_mode(event.size, pg.RESIZABLE)
+                self.screen_rect = self.screen.get_rect()
+            elif isinstance(self.page, GamePage) and (self.page.gameState.activePlayer == 0 or not self.page.AIgame) \
+                and event.type == pg.MOUSEBUTTONDOWN:
+                self.page.handleGameClick(self.set_page, self.client)
+        if self.client:
+            self.client.pump()
+
+    def screen_update(self):
+        self.page.update(self.image, self.screen_rect, self.scale, self.set_page, self.set_done, self.set_client,
+                         self.client)
+        if self.screen_rect.size != SCREEN_START_SIZE:
+            fit_to_rect = self.image_rect.fit(self.screen_rect)
+            fit_to_rect.center = self.screen_rect.center
+            scaled = pg.transform.smoothscale(self.image, fit_to_rect.size)
+            self.scale = fit_to_rect.width / SCREEN_START_SIZE[0]
+            self.screen.blit(scaled, fit_to_rect)
+        else:
+            self.screen.blit(self.image, (0, 0))
+
+    def main(self):
+        while not self.done:
+            self.screen_event()
+            self.screen_update()
+            pg.display.update()
+            self.clock.tick(self.fps)
+        if self.client:
+            self.client.closeConnection()
+
+    def set_page(self, page):
+        self.page = page
+
+    def set_client(self):
+        if not self.client:
+            self.client = startClient()
+
+    def set_done(self, done):
+        self.done = done
+
+
+if __name__ == "__main__":
+    run_it = ScreenControl()
+    run_it.main()
+    pg.quit()
+    sys.exit()
