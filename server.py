@@ -39,6 +39,8 @@ class ClientChannel(Channel):
 
     def Network_updateBoard(self, data):
         # print('received a move')
+        print("data")
+        print(data)
         self._server.updateBoard(data['id'], data['move'])
 
     def Network_message(self, data):
@@ -96,7 +98,7 @@ class CheckersServer(Server):
         print("sending the board to the players")
         room = self.playerIdToRoom[player]
 
-        room.game.get_all_legal_moves()
+        moves = room.game.get_all_legal_moves()
 
         if room.game.activePlayer == 0:
             self.playerIdToPlayerChannel[room.player0].Send(
@@ -129,9 +131,10 @@ class CheckersServer(Server):
         self.sendBoardToPlayers(player)
 
         # If the game is over, notify participants and delete the game.
-        if room.game.is_game_over():
+        is_over, winner = room.game.get_all_legal_moves()
+        if room.game.is_game_over(is_over):
             print('game is over')
-            message = "The game has ended in a draw." if room.game.is_draw() else "Player " + str(room.game.is_win()) + " has won the game."
+            message = "The game has ended in a draw." if winner == 2 else "Player " + str(winner) + " has won the game."
             self.deleteGame(self.playerIdToRoom[player], message)
         #     Otherwise, continue sending the board to the players.
         else:

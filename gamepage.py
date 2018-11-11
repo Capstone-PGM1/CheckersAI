@@ -138,9 +138,9 @@ class OnePlayerOptions(Page):
     def load_buttons(self, update_page=None, update_client=None, client=None):
         draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
         draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
-        self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True)))
-        self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True)))
-        self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True)))
+        self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
+        self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
+        self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
 
 
 class TwoPlayerOptions(Page):
@@ -207,15 +207,15 @@ class TwoPlayerOptions(Page):
 
 
 class GamePage(Page):
-    def __init__(self, ai_game=False):
+    def __init__(self, ai_game=False, ai_depth=1):
         Page.__init__(self)
         self.initial_click = None
         self.piece = Pieces()
         self.gameState = GameState()
-        self.gameState.get_all_legal_moves()
         self.board = self.gameState.get_board_for_network()
         self.possible_moves = []
         self.AIgame = ai_game
+        self.AIdepth = ai_depth
 
     def load_buttons(self, update_page=None, update_client=None, client=None):
         if client and client.has_current_game:
@@ -225,11 +225,10 @@ class GamePage(Page):
             self.board = self.gameState.get_board_for_network()
             self.possible_moves = self.gameState.send_possible_moves_for_network()
         self.piece.draw_pieces(self.image, self.board, self.possible_moves, self.initial_click)
-        if self.AIgame and self.gameState.activePlayer == 1:
-            self.gameState.update_game_state_with_move_helper(self.gameState.get_ai_move())
+        if self.AIgame and self.gameState.activePlayer == 1 and not self.gameState.is_game_over(self.gameState.get_all_legal_moves())[0]:
+            self.gameState.update_game_state_with_move_helper(self.gameState.get_ai_move(self.AIdepth))
             self.gameState.switch_player()
-            self.gameState.get_all_legal_moves()
-            is_win = self.check_win()
+            is_win = self.check_win(self.gameState.get_all_legal_moves())
             if is_win != -1:
                 update_page(WinPage(is_win))
 
@@ -307,12 +306,10 @@ class GamePage(Page):
 
         load_chatbox(self.image)
 
-    def check_win(self):
-        if self.gameState.is_game_over():
-            if self.gameState.is_draw():
-                return 2
-            else:
-                return self.gameState.is_win()
+    def check_win(self, possible_moves):
+        is_win, winner = self.gameState.is_game_over(possible_moves)
+        if is_win:
+            return winner
         return -1
 
     def handleGameClick(self, update_page, client):
@@ -326,7 +323,6 @@ class GamePage(Page):
 
         if self.initial_click and self.initial_click in self.possible_moves:
             for possibleMove in self.possible_moves[self.initial_click]:
-                print(possibleMove)
                 if row == possibleMove['endRow'] and col == possibleMove['endColumn']:
                     print("moved from " + str(self.initial_click) + " to (" + str(row) + ", " + str(col) + ")")
                     made_move = True
@@ -338,7 +334,7 @@ class GamePage(Page):
         if (row, col) in self.possible_moves:
             self.initial_click = (row, col)
         if made_move:
-            is_win = self.check_win()
+            is_win = self.check_win(self.gameState.get_all_legal_moves())
             if is_win != -1:
                 update_page(WinPage(is_win))
 

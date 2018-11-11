@@ -1,5 +1,6 @@
 import pygame as pg
 from tiles import *
+import os
 
 CAPTION = "Lyra'a Checkers"
 SCREEN_START_SIZE = (600, 450)
@@ -26,6 +27,7 @@ tan_color = (242, 221, 179)
 tan_highlight = (242, 235, 222)
 light_green = (83, 249, 88)
 
+is_mac = os.name == 'java'
 
 def draw_red_circle(x, y, circle_radius, outline_radius, window: pg.Surface):
     pg.draw.circle(window, red_outline, (x, y), outline_radius)
@@ -43,7 +45,8 @@ def draw_circle(x, y, color, outline_color, circle_radius, outline_radius, windo
 
 
 def render_text(font_size, message, color):
-    myfont = pg.font.SysFont('Arial', font_size)
+    scale = 1 if is_mac else 0.8
+    myfont = pg.font.SysFont('Arial', int(font_size * scale), not is_mac)
     textsurface = myfont.render(message, False, color)
     return textsurface, textsurface.get_rect()
 
@@ -88,21 +91,3 @@ def load_chatbox(window, gamestate=1):
             pg.draw.rect(window, (54, 32, 3), [437, 290, 120, 50], 3)
         else:
             return
-
-
-
-#  MOVE IT TO SCREEN CONTROL METHOD
-def check_win(game, window):
-    if game.is_game_over():
-        if game.is_draw():
-            print("The game is a draw.")
-        else:
-            winningPlayer = 'red' if game.is_win() == 0 else 'black'
-            # if (winningPlayer == 'red'):
-                # window.blit(Wood, (0, 0))
-                # loadWinPage(1)
-            # else:
-                # window.blit(Wood, (0, 0))
-                # loadWinPage(0)
-        return True
-    return False
