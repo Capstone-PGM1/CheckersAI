@@ -65,15 +65,12 @@ class GameState(object):
     def send_possible_moves_for_network(self):
         dct = dict()
         possible_moves = self.get_all_legal_moves()
-        for move in possible_moves:
-            row = move.moves[0].fromRow
-            column = move.moves[0].fromColumn
-            m = {"endRow": move.endRow, "endColumn": move.endColumn, "piecesNumber": move.piecesNumber,
-                 "moves": {(y.fromRow, y.fromColumn): (y.toRow, y.toColumn) for y in move.moves}}
-            if (row, column) in dct:
-                dct[(row, column)].append(m)
-            else:
-                dct[(row, column)] = [m]
+        for row in range(8):
+            for column in range(8):
+                moves = piece_possible_moves(row, column, possible_moves)
+                if len(moves) > 0:
+                    dct[(row, column)] = [{"endRow": x.endRow, "endColumn": x.endColumn, "piecesNumber": x.piecesNumber,
+                                           "moves": {(y.fromRow, y.fromColumn): (y.toRow, y.toColumn) for y in x.moves}} for x in moves]
         return dct
 
     def get_board_for_network(self):
