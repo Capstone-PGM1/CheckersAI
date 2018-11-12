@@ -19,6 +19,7 @@ class Client(ConnectionListener):
         self.has_current_game = False
         self.possible_moves = None
         self.board = None
+        self.messages = []
 
     def Network(self, data):
         print
@@ -31,12 +32,13 @@ class Client(ConnectionListener):
     def Network_error(self, data):
         print
         "error:", data['error'][1]
+        raise ConnectionError
 
     def Network_disconnect(self):
         print
         "disconnected from the server"
 
-    def closeConnection(self):
+    def __del__(self):
         connection.Send({"action": "disconnect"})
 
     def Network_receiveId(self, data):
@@ -46,19 +48,6 @@ class Client(ConnectionListener):
     def Loop(self):
         connection.Pump()
         self.Pump()
-
-    def printGame(self, gameDict):
-        firstRow = '  '
-        for i in range(8):
-            firstRow += str(i) + ' '
-        print(firstRow)
-
-        for row in range(8):
-            rowString = str(row) + ' '
-            for column in range(8):
-                rowString += gameDict[(row, column)] + " "
-            print(rowString)
-
 
     # These methods deal with connecting to a multiplayer game
 
@@ -75,7 +64,6 @@ class Client(ConnectionListener):
     def Network_getChallenge(self, data):
         if not self.pending_challenge:
             self.pending_challenge = PendingChallenge(self.id, data['otherPlayerId'], datetime.now())
-            print(str(data['otherPlayerId']) + " has invited you to a challenge\n")
 
     def respond_to_challenge(self, response):
         connection.Send({"action": "getResponseToChallenge", "id": self.id, "response": response, "otherPlayer": self.pending_challenge.challenge_from})
@@ -91,17 +79,20 @@ class Client(ConnectionListener):
 
     def acknowledge_rejected_challenge(self):
         self.rejected_challenge = None
-        print("rejected challenge is now none.")
+
+    def Network_closeGame(self, data):
+        self.messages.append("{}: {}".format(data['playerName'], data['message']))
+        self.has_current_game = False
+        self.possible_moves = None
+        self.board = None
+        self.messages = []
 
     # These methods deal with the checkers game.
-    # print the game on the screen and highlight possible moves.
     def Network_getPossibleMoves(self, data):
-        print("got the game")
         # data['game'] is a {(rowIndex, columnIndex): 'char'} for each item.
         # Characters: x is black, o is red, K is a red king, Q is a black king, and R/B are pieces.
         self.board = data['game']
         if "possibleMoves" in data:
-            print("got the possible moves")
             self.possible_moves = data['possibleMoves']
         else:
             self.possible_moves = None
@@ -116,7 +107,7 @@ class Client(ConnectionListener):
 
     # This method deals with the chat room.
     def Network_message(self, data):
-        self.latestMessage = {data['playerName']: data['message']}
+        self.messages.append("{}: {}".format(data['playerName'], data['message']))
 
     def sendMessage(self, message):
         connection.Send({"action": "message", "id": self.id, "message": message})

@@ -5,6 +5,7 @@ https://github.com/Mekire/pygame-samples/blob/master/resizable/resizable_aspect_
 
 from graphics_helpers import *
 from client import *
+from pygame_textinput import *
 
 
 class Pieces(object):
@@ -66,6 +67,12 @@ class Page(object):
         pass
 
     def load_buttons(self, update_page=None, update_client=None, client=None):
+        pass
+
+    def handle_event(self, event, set_page, client):
+        pass
+
+    def get_text_input(self, events, client):
         pass
 
     # https://pythonprogramming.net/pygame-button-function/?completed=/placing-text-pygame-buttons/
@@ -144,6 +151,17 @@ class OnePlayerOptions(Page):
 
 
 class TwoPlayerOptions(Page):
+    def __init__(self):
+        Page.__init__(self)
+        self.scroll = 0
+
+    def handle_event(self, event, set_page, client):
+        if event.type == pg.MOUSEBUTTONDOWN:
+            if event.button == 4:
+                self.scroll -= 1
+            elif event.button == 5:
+                self.scroll += 1
+
     def load_background(self):
         # TODO: Update the numbers as necessary.
         render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
@@ -157,49 +175,55 @@ class TwoPlayerOptions(Page):
             render_centered_text_with_background(30, "Available players", black_color, 350, 150, 180, 30, self.image,
                                                  tan_color)
 
-        # TODO: Update the numbers as necessary.
-        xNum = 350
-        yNum = 200
+            # TODO: Update the numbers as necessary.
+            xNum = 350
+            yNum = 200
 
-        if client and hasattr(client, "other_players"):
-            pygame.draw.rect(self.image, tan_color, [xNum, yNum, 180, 150])
-            if len(client.other_players) == 0:
-                render_centered_text_with_background(30, "None", black_color, xNum, yNum, 180, 150,
-                                                     self.image, tan_color)
+            if hasattr(client, "other_players"):
+                pygame.draw.rect(self.image, tan_color, [xNum, yNum, 180, 150])
+                if len(client.other_players) == 0:
+                    render_centered_text_with_background(30, "None", black_color, xNum, yNum, 180, 150,
+                                                         self.image, tan_color)
 
-            # TODO: this should scroll.
-            for player in client.other_players:
-                self.button(player, xNum, yNum, 180, 30, tan_color, tan_highlight,
-                            lambda: client.send_challenge(player))
-                yNum += 30
+                else:
+                    self.scroll = drawText(self.image,
+                             client.other_players,
+                             black_color,
+                             [xNum, yNum, 180, 150],
+                             self.scroll,
+                             self.button,
+                             30,
+                             5,
+                             lambda player : client.send_challenge(player))
 
-        if client and client.has_current_game:
-            update_page(GamePage(False))
+            if client.has_current_game:
+                update_page(GamePage(False, networked_game = True))
 
-        if client and client.rejected_challenge:
-            # TODO: Ugly way to make sure the message that the challenge was rejected stays on the screen.
-            if hasattr(self, 'timeout'):
-                self.timeout -= 1
-            else:
-                self.timeout = 20
-            if self.timeout == 0:
-                client.acknowledge_rejected_challenge()
-            else:
-                render_centered_text(30, "Your challenge to {} was rejected".format(client.rejected_challenge),
-                                     black_color, xNum, yNum, 75, 20, self.image)
+            if client.rejected_challenge:
+                # TODO: Ugly way to make sure the message that the challenge was rejected stays on the screen.
+                if hasattr(self, 'timeout'):
+                    self.timeout -= 1
+                else:
+                    self.timeout = 20
+                if self.timeout == 0:
+                    client.acknowledge_rejected_challenge()
+                else:
+                    render_centered_text(30, "Your challenge to {} was rejected".format(client.rejected_challenge),
+                                         black_color, xNum, yNum, 75, 20, self.image)
 
-        if client and client.pending_challenge:
-            if client.pending_challenge.challenge_to == client.id:
-                render_centered_text(30, "You have received a challenge from {}".format(
-                    client.pending_challenge.challenge_from), black_color, 100, 370, 400, 20, self.image)
-                self.button("Accept", 210, 400, 75, 20, tan_color, tan_highlight,
-                            lambda: client.respond_to_challenge(True))
-                self.button("Decline", 315, 400, 75, 20, tan_color, tan_highlight,
-                            lambda: client.respond_to_challenge(False))
-            else:
-                render_centered_text(30, "Waiting for player {} to respond.".format(
-                    str(client.pending_challenge.challenge_to)),
-                                     black_color, 100, 370, 400, 20, self.image)
+            # TODO: The pending challenge and rejected challenge would overlap if both show at the same time.
+            if client.pending_challenge:
+                if client.pending_challenge.challenge_to == client.id:
+                    render_centered_text(30, "You have received a challenge from {}".format(
+                        client.pending_challenge.challenge_from), black_color, 100, 370, 400, 20, self.image)
+                    self.button("Accept", 210, 400, 75, 20, tan_color, tan_highlight,
+                                lambda: client.respond_to_challenge(True))
+                    self.button("Decline", 315, 400, 75, 20, tan_color, tan_highlight,
+                                lambda: client.respond_to_challenge(False))
+                else:
+                    render_centered_text(30, "Waiting for player {} to respond.".format(
+                        str(client.pending_challenge.challenge_to)),
+                                         black_color, 100, 370, 400, 20, self.image)
 
     def __del__(self):
         if hasattr(self, 'timeout'):
@@ -207,7 +231,7 @@ class TwoPlayerOptions(Page):
 
 
 class GamePage(Page):
-    def __init__(self, ai_game=False, ai_depth=1):
+    def __init__(self, ai_game=False, ai_depth = 1, networked_game = False):
         Page.__init__(self)
         self.initial_click = None
         self.piece = Pieces()
@@ -215,10 +239,33 @@ class GamePage(Page):
         self.board = self.gameState.get_board_for_network()
         self.possible_moves = []
         self.AIgame = ai_game
+        self.scroll = 0
+        self.textinput = TextInput(repeat_keys_interval_ms=100)
+        self.networked_game = networked_game
         self.AIdepth = ai_depth
 
-    def load_buttons(self, update_page=None, update_client=None, client=None):
+    def handle_event(self, event, set_page, client):
+        if (self.gameState.activePlayer == 0 or not self.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
+            self.handleGameClick(set_page, client)
+            if client and client.has_current_game and event.button == 4:
+                self.scroll -= 1
+            elif client and client.has_current_game and event.button == 5:
+                self.scroll += 1
+
+    def get_text_input(self, events, client):
         if client and client.has_current_game:
+            if self.textinput.update(events):
+                text = self.textinput.get_text()
+                if text:
+                    client.sendMessage(self.textinput.get_text())
+                    self.textinput.clear_text()
+
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        if self.networked_game and not client.has_current_game:
+            update_page(TwoPlayerOptions())
+            return
+        if client and client.has_current_game:
+            self.scroll = load_chatbox(self.image, client.messages, self.scroll, self.textinput.get_text())
             self.board = client.board
             self.possible_moves = client.possible_moves if client.possible_moves else []
         else:
@@ -303,8 +350,6 @@ class GamePage(Page):
         for x in range(55, 395, 10):
             for y in range(385, 395, 10):
                 self.image.blit(Tiles.blackTile, (x, y))
-
-        load_chatbox(self.image)
 
     def check_win(self, possible_moves):
         is_win, winner = self.gameState.is_game_over(possible_moves)
@@ -409,18 +454,20 @@ class ScreenControl(object):
         self.keys = pg.key.get_pressed()
         self.client = None
         self.page = Intro()
+        self.scroll = 0
 
     def screen_event(self):
-        for event in pg.event.get():
+        events = pg.event.get()
+        for event in events:
             self.keys = pg.key.get_pressed()
             if event.type == pg.QUIT or self.keys[pg.K_ESCAPE]:
                 self.done = True
             elif event.type == pg.VIDEORESIZE:
                 self.screen = pg.display.set_mode(event.size, pg.RESIZABLE)
                 self.screen_rect = self.screen.get_rect()
-            elif isinstance(self.page, GamePage) and (self.page.gameState.activePlayer == 0 or not self.page.AIgame) \
-                and event.type == pg.MOUSEBUTTONDOWN:
-                self.page.handleGameClick(self.set_page, self.client)
+            else:
+                self.page.handle_event(event, self.set_page, self.client)
+        self.page.get_text_input(events, self.client)
         if self.client:
             self.client.pump()
 
@@ -442,8 +489,6 @@ class ScreenControl(object):
             self.screen_update()
             pg.display.update()
             self.clock.tick(self.fps)
-        if self.client:
-            self.client.closeConnection()
 
     def set_page(self, page):
         self.page = page

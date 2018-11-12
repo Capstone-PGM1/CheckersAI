@@ -2,7 +2,7 @@ import pygame as pg
 from tiles import *
 import os
 
-CAPTION = "Lyra'a Checkers"
+CAPTION = "Lyra's Checkers"
 SCREEN_START_SIZE = (600, 450)
 
 # Circle sizes
@@ -82,12 +82,81 @@ def load_white_tiles(window, lower1, upper1, lower2, upper2, n):
             lower2 += 40
             upper2 += 40
 
+# TODO: text doesn't wrap if the word is longer than the chat box.
+# TODO: figure out how to only make backspaces and enter go through if there are too many characters.
+def load_chatbox(window, messages, scroll, textinput):
+    for x in range(437, 547, tile_size):
+        for y in range(140, 315, tile_size):
+            window.blit(Tiles.tanTile, (x, y))
+        pg.draw.rect(window, (54, 32, 3), [437, 290, 120, 50], 3)
 
-def load_chatbox(window, gamestate=1):
-    if gamestate == 1:
-        for x in range(437, 547, tile_size):
-            for y in range(140, 315, tile_size):
-                window.blit(Tiles.tanTile, (x, y))
-            pg.draw.rect(window, (54, 32, 3), [437, 290, 120, 50], 3)
+    text = wrap_text('\n'.join(messages), pg.font.SysFont('Arial', 20), 120)
+    new_scroll =  drawText(window, text, black_color, [437, 140, 120, 150], scroll)
+
+    if textinput:
+        message = wrap_text(textinput, pg.font.SysFont('Arial', 20), 120)
+        drawText(window, message, black_color, [437, 290, 120, 50], 0, num_lines = 3)
+    return new_scroll
+
+
+# Got wrap_text directly from https://github.com/ColdrickSotK/yamlui/blob/master/yamlui/util.py#L82-L143
+def wrap_text(text, font, width):
+    """Wrap text to fit inside a given width when rendered.
+    :param text: The text to be wrapped.
+    :param font: The font the text will be rendered in.
+    :param width: The width to wrap to.
+    """
+    text_lines = text.replace('\t', '    ').split('\n')
+    if width is None or width == 0:
+        return text_lines
+
+    wrapped_lines = []
+    for line in text_lines:
+        line = line.rstrip() + ' '
+        if line == ' ':
+            wrapped_lines.append(line)
+            continue
+
+        # Get the leftmost space ignoring leading whitespace
+        start = len(line) - len(line.lstrip())
+        start = line.index(' ', start)
+        while start + 1 < len(line):
+            # Get the next potential splitting point
+            next = line.index(' ', start + 1)
+            if font.size(line[:next])[0] <= width:
+                start = next
+            else:
+                wrapped_lines.append(line[:start])
+                line = line[start+1:]
+                start = line.index(' ')
+        line = line[:-1]
+        if line:
+            wrapped_lines.append(line)
+    return wrapped_lines
+
+# modified text from https://www.reddit.com/r/pygame/comments/5lhp28/how_do_i_get_mouse_wheel_events/
+# draw some text into an area of a surface
+# automatically wraps words
+# returns any text that didn't get blitted
+def drawText(surface, text, color, rectangle, scroll, button = None, height = None, num_lines = 8, onClickButton = None):
+    y = rectangle[1]
+    lineSpacing = 2
+    myfont = pg.font.SysFont('Arial', 20)
+    # get the height of the font
+    fontHeight = height if height else myfont.size("Tg")[1]
+
+    # get scroll. don't let scroll get too big.
+    if scroll > 0:
+        scroll = 0
+    elif abs(scroll) > len(text):
+        scroll = len(text) * -1
+    begin = max(scroll + len(text) - num_lines, 0)
+    end = max(scroll + len(text), num_lines)
+    for i in range(begin, min(end, len(text))):
+        if button:
+            button(text[i], rectangle[0], y, 180, 30, tan_color, tan_highlight, lambda : onClickButton(text[i]))
         else:
-            return
+            image = myfont.render(text[i], True, color)
+            surface.blit(image, (rectangle[0], y))
+        y += fontHeight + lineSpacing
+    return scroll
