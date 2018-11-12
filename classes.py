@@ -1,12 +1,6 @@
 import copy
 import sys
-
-
-# lives in each Cell on the board
-class Piece(object):
-    def __init__(self, color, king=False):
-        self.color = color  # 0 is red, 1 is black, 2 is Empty
-        self.king = king
+from classes_helpers import *
 
 
 # a one move from Cell to Cell, part of LegalMove
@@ -44,24 +38,11 @@ class LegalMove(object):
             moves.append(self)
 
 
-# Occupies [row][column] in the board. Always has a piece (color=2 for empty Cell)
-class Cell(object):
-    possibleMoves: [LegalMove]  # a list of Possible moves for the piece in the Cell. Always empty for inactive player
-
-    def __init__(self, color, king=False):
-        self.piece = Piece(color, king)  # piece is 0 for red, 1 for black, 2 for empty
-        self.possibleMoves = []
-
-    def send_possible_moves_for_network(self):
-        return [{"endRow": x.endRow, "endColumn": x.endColumn, "piecesNumber": x.piecesNumber,
-                 "moves": {(y.fromRow, y.fromColumn): (y.toRow, y.toColumn) for y in x.moves}} for x in
-                self.possibleMoves]
-
 # th main class - has board with Cells, active player's number & counter for empty moves
 class GameState(object):
-    activePlayer: int  # 0 - red, 1 - black
-    board: [[Cell]]  # only activePlayer can have possibleMoves non-empty. Inactive player's list is always cleared
+    activePlayer: int
     emptyMoves: int
+    board: [[str]]
 
     def __repr__(self):
         string = "  "
@@ -71,59 +52,44 @@ class GameState(object):
         for row in range(8):
             string += str(row) + " "
             for column in range(8):
-                if self.board[row][column].piece.color == 2:
+                if self.board[row][column] == 'x':
                     if row % 2 == column % 2:
                         string += "_ "
                     else:
                         string += ". "
-                elif self.board[row][column].piece.color == 0:
-                    if self.board[row][column].piece.king:
-                        string += "R "
-                    else:
-                        string += "r "
                 else:
-                    if self.board[row][column].piece.king:
-                        string += "B "
-                    else:
-                        string += "b "
+                    string += self.board[row][column]
             string += "\n"
-
         return string
 
     def send_possible_moves_for_network(self):
         dct = dict()
+        possible_moves = self.get_all_legal_moves()
         for row in range(8):
             for column in range(8):
-                possibleMoves = self.board[row][column].send_possible_moves_for_network()
-                if possibleMoves:
-                    dct[(row, column)] = possibleMoves
+                moves = piece_possible_moves(row, column, possible_moves)
+                if len(moves) > 0:
+                    dct[(row, column)] = [{"endRow": x.endRow, "endColumn": x.endColumn, "piecesNumber": x.piecesNumber,
+                                           "moves": {(y.fromRow, y.fromColumn): (y.toRow, y.toColumn) for y in x.moves}} for x in moves]
         return dct
 
     def get_board_for_network(self):
         dct = dict()
         for row in range(8):
             for column in range(8):
-                if self.board[row][column].piece.color == 2:
+                if self.board[row][column] == 'x':
                     if row % 2 == column % 2:
                         # string += "x "
                         dct[(row, column)] = "_"
                     else:
                         dct[(row, column)] = "."
-                elif self.board[row][column].piece.color == 0:
-                    if self.board[row][column].piece.king:
-                        dct[(row, column)] = "R"
-                    else:
-                        dct[(row, column)] = "r"
                 else:
-                    if self.board[row][column].piece.king:
-                        dct[(row, column)] = "B"
-                    else:
-                        dct[(row, column)] = "b"
+                    dct[(row, column)] = self.board[row][column]
         return dct
 
     # Initializing to empty array doesn't work well in Python: https://docs.python-guide.org/writing/gotchas/
     # The first time, it works okay. The second time, that empty array has been mutated, and it becomes something else.
-    def __init__(self, board=None, empty_moves=0, active_player=0):
+    def __init__(self, board=None, empty_moves=0, active_player=RED):
         self.board = board if board else []
         if len(self.board) == 0:
             for row in range(8):
@@ -131,68 +97,57 @@ class GameState(object):
                 for column in range(8):
                     if row % 2 == column % 2:
                         if row < 3:
-                            temp_row.append(Cell(0))
+                            temp_row.append('r')
                         elif row > 4:
-                            temp_row.append(Cell(1))
+                            temp_row.append('b')
                         else:
-                            temp_row.append(Cell(2))
+                            temp_row.append('x')
                     else:
-                        temp_row.append(Cell(2))
+                        temp_row.append('x')
                 self.board.append(temp_row)
         self.emptyMoves = empty_moves  # for 40 moves definition of draw
         self.activePlayer = active_player  # 0 is red player, 1 is black
 
     def switch_player(self):
-        self.activePlayer = (self.activePlayer + 1) % 2
-
-    # I'll need it later for refactor, isn't used now
-    def do_to_all_active_cells(self, method_to_apply):
-        for row in range(8):
-            for column in range(8):
-                if self.board[row][column].piece.color == self.activePlayer:
-                    method_to_apply(self.board[row][column])
+        self.activePlayer = other_player(self.activePlayer)
 
     # Checks if the piece in board[row][column] can jump left. Does it's own checking for color against activePlayer
     # color and king/not king condition.
     def can_jump_left(self, row, column) -> bool:
-        if column - 2 >= 0 and row + 2 < 8 and self.board[row + 2][column - 2].piece.color == 2:
-            if (self.board[row][column].piece.color == 0 and
-                self.board[row + 1][column - 1].piece.color == 1) or \
-                    (self.board[row][column].piece.color == 1 and self.board[row][column].piece.king and
-                     self.board[row + 1][column - 1].piece.color == 0):
+        if column - 2 >= 0 and row + 2 < 8 and self.board[row + 2][column - 2] == 'x':
+            if (self.board[row][column].upper() == 'R' and
+                self.board[row + 1][column - 1].upper() == 'B') or \
+                    (self.board[row][column] == 'B' and self.board[row + 1][column - 1].upper() == 'R'):
                 return True
         return False
 
     # Checks if the piece in board[row][column] can jump right. Does it's own checking for color against activePlayer
     # color and king/not king condition.
     def can_jump_right(self, row, column) -> bool:
-        if column + 2 < 8 and row + 2 < 8 and self.board[row + 2][column + 2].piece.color == 2:
-            if (self.board[row][column].piece.color == 0 and
-                self.board[row + 1][column + 1].piece.color == 1) or \
-                    (self.board[row][column].piece.color == 1 and self.board[row][column].piece.king and
-                     self.board[row + 1][column + 1].piece.color == 0):
+        if column + 2 < 8 and row + 2 < 8 and self.board[row + 2][column + 2] == 'x':
+            if (self.board[row][column].upper() == 'R' and
+                self.board[row + 1][column + 1].upper() == 'B') or \
+                    (self.board[row][column] == 'B' and self.board[row + 1][column + 1].upper() == 'R'):
                 return True
         return False
 
     # Checks if the piece in board[row][column] can jump back left. Does it's own checking for color against
     #  activePlayer color and king/not king condition.
     def can_jump_back_left(self, row, column) -> bool:
-        if column - 2 >= 0 and row - 2 >= 0 and self.board[row - 2][column - 2].piece.color == 2:
-            if (self.board[row][column].piece.color == 0 and self.board[row][column].piece.king and
-                self.board[row - 1][column - 1].piece.color == 1) or \
-                    (self.board[row][column].piece.color == 1 and
-                     self.board[row - 1][column - 1].piece.color == 0):
+        if column - 2 >= 0 and row - 2 >= 0 and self.board[row - 2][column - 2] == 'x':
+            if (self.board[row][column] == 'R' and self.board[row - 1][column - 1].upper() == 'B') or \
+                    (self.board[row][column].upper() == "B" and
+                     self.board[row - 1][column - 1].upper() == "R"):
                 return True
         return False
 
     # Checks if the piece in board[row][column] can jump back right. Does it's own checking for color against
     # activePlayer color and king/not king condition.
     def can_jump_back_right(self, row, column) -> bool:
-        if column + 2 < 8 and row - 2 >= 0 and self.board[row - 2][column + 2].piece.color == 2:
-            if (self.board[row][column].piece.color == 0 and self.board[row][column].piece.king and
-                self.board[row - 1][column + 1].piece.color == 1) or \
-                    (self.board[row][column].piece.color == 1 and
-                     self.board[row - 1][column + 1].piece.color == 0):
+        if column + 2 < 8 and row - 2 >= 0 and self.board[row - 2][column + 2] == 'x':
+            if (self.board[row][column] == 'R' and self.board[row - 1][column + 1].upper() == 'B') or \
+                    (self.board[row][column].upper() == 'B' and
+                     self.board[row - 1][column + 1].upper() == 'R'):
                 return True
         return False
 
@@ -201,8 +156,8 @@ class GameState(object):
     def can_move_left(self, row, column) -> bool:
         column_left = column - 1
         row_left = row + 1
-        if column_left >= 0 and row_left < 8 and self.board[row_left][column_left].piece.color == 2:
-            if self.board[row][column].piece.color == 0 or self.board[row][column].piece.king:
+        if column_left >= 0 and row_left < 8 and self.board[row_left][column_left] == 'x':
+            if self.board[row][column].upper() == 'R' or self.board[row][column] == 'B':
                 return True
         return False
 
@@ -211,8 +166,8 @@ class GameState(object):
     def can_move_right(self, row, column) -> bool:
         column_right = column + 1
         row_right = row + 1
-        if column_right < 8 and row_right < 8 and self.board[row_right][column_right].piece.color == 2:
-            if self.board[row][column].piece.color == 0 or self.board[row][column].piece.king:
+        if column_right < 8 and row_right < 8 and self.board[row_right][column_right] == 'x':
+            if self.board[row][column].upper() == 'R' or self.board[row][column] == 'B':
                 return True
         return False
 
@@ -221,8 +176,8 @@ class GameState(object):
     def can_move_back_left(self, row, column) -> bool:
         column_left = column - 1
         row_left = row - 1
-        if column_left >= 0 and row_left >= 0 and self.board[row_left][column_left].piece.color == 2:
-            if self.board[row][column].piece.color == 1 or self.board[row][column].piece.king:
+        if column_left >= 0 and row_left >= 0 and self.board[row_left][column_left] == 'x':
+            if self.board[row][column].upper() == 'B' or self.board[row][column] == 'R':
                 return True
         return False
 
@@ -231,8 +186,8 @@ class GameState(object):
     def can_move_back_right(self, row, column) -> bool:
         column_right = column + 1
         row_right = row - 1
-        if column_right < 8 and row_right >= 0 and self.board[row_right][column_right].piece.color == 2:
-            if self.board[row][column].piece.color == 1 or self.board[row][column].piece.king:
+        if column_right < 8 and row_right >= 0 and self.board[row_right][column_right] == 'x':
+            if self.board[row][column].upper() == 'B' or self.board[row][column] == 'R':
                 return True
         return False
 
@@ -249,9 +204,8 @@ class GameState(object):
 
     # a condition to end jump sequence - checks if non-king piece reached king-row
     def is_king_condition(self, c_row, c_column, e_row) -> bool:
-        return not self.board[c_row][c_column].piece.king and \
-               ((self.board[c_row][c_column].piece.color == 0 and e_row == 7) or
-                (self.board[c_row][c_column].piece.color == 1 and e_row == 0))
+        return ((self.board[c_row][c_column] == 'r' and e_row == 7) or
+                (self.board[c_row][c_column] == 'b' and e_row == 0))
 
     # calculates all legal jumps for the piece and appends it to all_paths. Recursive. c_path is a collector for Move
     # for current LegalMove being built
@@ -259,10 +213,10 @@ class GameState(object):
         def recursive(e_row, e_column):
             move = [Move(c_row, c_column, e_row, e_column)]
             if self.is_king_condition(c_row, c_column, e_row):
-                new_m = LegalMove(e_row, e_column, piece_number, c_path + move)
+                new_m = LegalMove(e_row, e_column, piece_number + 1, c_path + move)
                 new_m.append_legal_jump(all_paths)
                 return
-            new_state = copy.deepcopy(self)
+            new_state = GameState(copy.deepcopy(self.board), self.emptyMoves, self.activePlayer)
             new_state.update_game_state_with_move_helper(LegalMove(e_row, e_column, 1, move))
             new_state.calculate_legal_jumps(e_row, e_column, piece_number + 1, c_path + move, all_paths)
 
@@ -299,69 +253,58 @@ class GameState(object):
     # clears possibleMoves list for inactive player
     def get_all_legal_moves(self):
         have_jumps = False
+        all_moves = []
         for row in range(8):
             for column in range(8):
-                if self.board[row][column].piece.color == self.activePlayer:
-                    self.board[row][column].possibleMoves, is_jump = self.calculate_legal_moves(row, column)
+                if self.board[row][column].upper() == piece_to_letter(self.activePlayer, True):
+                    new_moves, is_jump = self.calculate_legal_moves(row, column)
+                    all_moves = all_moves + new_moves
                     have_jumps = have_jumps or is_jump
-                else:
-                    self.board[row][column].possibleMoves.clear()
         if have_jumps:
-            for row in range(8):  # that is a lazy way. better find a way not to go through all board - eventually
-                for column in range(8):
-                    if self.board[row][column].piece.color == self.activePlayer:
-                        if len(self.board[row][column].possibleMoves) > 0:
-                            the_move = self.board[row][column].possibleMoves[0]
-                            if abs(the_move.moves[0].fromRow - the_move.moves[0].toRow) != 2:
-                                self.board[row][column].possibleMoves.clear()
+            return list(filter(lambda m: m.piecesNumber > 0, all_moves))
+        else:
+            return all_moves
 
     # updates the GameState with LegalMove - "moves" the pieces, removes "taken" pieces
     def update_game_state_with_move_helper(self, legal_move: LegalMove):
         if len(legal_move.moves) > 0:
             start_row = legal_move.moves[0].fromRow
             start_column = legal_move.moves[0].fromColumn
-            self.board[legal_move.endRow][legal_move.endColumn].piece = copy.deepcopy(
-                self.board[start_row][start_column].piece)
-            if self.is_king_condition(start_row, start_column, legal_move.endRow):
-                self.board[legal_move.endRow][legal_move.endColumn].piece.king = True
-            self.board[start_row][start_column].piece.color = 2
+            moving_piece = self.board[start_row][start_column]
+            self.board[legal_move.endRow][legal_move.endColumn] = moving_piece.upper() if\
+                self.is_king_condition(start_row, start_column, legal_move.endRow) else moving_piece
+            self.board[start_row][start_column] = 'x'
             if abs(start_row - legal_move.moves[0].toRow) == 2:
                 self.emptyMoves = 0
                 for move in legal_move.moves:
                     self.board[(move.fromRow + move.toRow) // 2][
-                        (move.fromColumn + move.toColumn) // 2].piece.color = 2
-            elif not self.board[start_row][start_column].piece.king:
+                        (move.fromColumn + move.toColumn) // 2] = 'x'
+            elif self.board[start_row][start_column] != 'R' and self.board[start_row][start_column] != "B":
                 self.emptyMoves = 0
             else:
                 self.emptyMoves = self.emptyMoves + 1
         else:
             print("BIG ERROR: legal_move doesn't have any moves in it")
 
-
     # Ignores invalid moves. If move is valid, the game is updated, and the board is ready for the next player.
     def update_game_state_with_move(self, start_row, start_column, end_row, end_column):
-        for possibleMove in self.board[start_row][start_column].possibleMoves:
-            if end_column == possibleMove.endColumn and end_row == possibleMove.endRow:
-                self.update_game_state_with_move_helper(possibleMove)
-                self.switch_player()
-                self.get_all_legal_moves()
+        moves = self.get_all_legal_moves()
+        for m in moves:
+            if m.endRow == end_row and m.endColumn == end_column and m.moves[0].fromRow == start_row \
+                    and m.moves[0].fromColumn == start_column:
+                self.update_game_state_with_move_helper(m)
+        self.switch_player()
 
     # checks if the game is over with win condition
     # returns color of the winner or 2 - if game is not over
-    def is_win(self) -> int:
-        possible_moves = 0
-        for row in range(8):
-            for column in range(8):
-                if self.board[row][column].piece.color == self.activePlayer:
-                    if len(self.board[row][column].possibleMoves) != 0:
-                        possible_moves = possible_moves + 1
-        if possible_moves == 0:
-            return (self.activePlayer + 1) % 2
-        else:
-            for row in self.board:
-                for cell in row:
-                    if cell.piece.color == (self.activePlayer + 1) % 2:
-                        return 2
+    def is_win(self, possible_moves) -> int:
+        if len(possible_moves) == 0:
+            return other_player(self.activePlayer)
+        other_piece = piece_to_letter(other_player(self.activePlayer), True)
+        for row in self.board:
+            for cell in row:
+                if cell.upper() == other_piece:
+                    return 2
         return self.activePlayer
 
     # checks if game is over with a draw
@@ -369,20 +312,22 @@ class GameState(object):
         return self.emptyMoves >= 40
 
     # checks if the game is over
-    def is_game_over(self) -> bool:
-        return self.is_draw() or self.is_win() != 2
+    def is_game_over(self, possible_moves) -> (bool, int):
+        winner = self.is_win(possible_moves)
+        return self.is_draw() or winner != 2, winner
 
     # evaluation function for minimax - NEEDS MORE THOUGHTS ON IT
     def get_state_value(self, maximizing_player) -> int:
+        moves = self.get_all_legal_moves()
         if maximizing_player:
             max_player_number = self.activePlayer
         else:
-            max_player_number = (self.activePlayer + 1) % 2
-        if self.is_game_over():
+            max_player_number = other_player(self.activePlayer)
+        game_over, winner = self.is_game_over(moves)
+        if game_over:
             if self.is_draw():
                 return 1000  # draw is good, but not as good as a win
             else:
-                winner = self.is_win()
                 if winner == max_player_number:
                     return sys.maxsize
                 else:
@@ -390,7 +335,7 @@ class GameState(object):
         else:
             if not maximizing_player:
                 self.switch_player()
-                self.get_all_legal_moves()
+            moves = self.get_all_legal_moves()
             max_player_kings = 0
             min_player_kings = 0
             max_player_pawns = 0
@@ -402,22 +347,18 @@ class GameState(object):
             max_player_blocked = 0
             min_player_blocked = 0
 
-            if self.activePlayer == 0:
-                max_first_row = 0
-                min_first_row = 7
-            else:
-                max_first_row = 7
-                min_first_row = 0
+            max_first_row = 0 if self.activePlayer == RED else 7
+            min_first_row = 7 if self.activePlayer == RED else 0
 
             # calculate all the pieces number
             for row in range(8):
                 for column in range(8):
-                    if self.board[row][column].piece.color == self.activePlayer:
-                        if self.board[row][column].piece.king:
+                    if self.board[row][column].upper() == piece_to_letter(self.activePlayer, True):
+                        if self.board[row][column].isupper():
                             max_player_kings = max_player_kings + 1
                         else:
                             max_player_pawns = max_player_pawns + 1
-                        if len(self.board[row][column].possibleMoves) == 0:
+                        if len(piece_possible_moves(row, column, moves)) == 0:
                             path = []
                             self.calculate_simple_moves(row, column, path)
                             if len(path) == 0:
@@ -426,13 +367,13 @@ class GameState(object):
                             max_player_corners = max_player_corners + 1
                         if row == max_first_row:
                             max_player_first_row = max_player_first_row + 1
-                    elif self.board[row][column].piece.color != 2:
-                        if self.board[row][column].piece.king:
+                    elif self.board[row][column] != 'x':
+                        if self.board[row][column].isupper():
                             min_player_kings = min_player_kings + 1
                         else:
                             min_player_pawns = min_player_pawns + 1
                         if row == min_first_row:
-                            min_player_first_row  = min_player_first_row + 1
+                            min_player_first_row = min_player_first_row + 1
                         if column == 0 or column == 7:
                             min_player_corners = min_player_corners + 1
                         path = []
@@ -452,55 +393,48 @@ class GameState(object):
 
     # get ai move for 1-player game. Currently calling for minimax algo to find out best move
     # if several moves has same value, use random number to select one of those
-    def get_ai_move(self) -> LegalMove:
-        cur_val, move = self.minimax_alphabeta(5, -sys.maxsize - 1, sys.maxsize, False)
+    def get_ai_move(self, depth) -> LegalMove:
+        cur_val, move = self.minimax_alphabeta(depth, -sys.maxsize - 1, sys.maxsize, False)
         print("Moving to row " + str(move.endRow) + " column " + str(move.endColumn) + " from row " +
               str(move.moves[0].fromRow) + " column " + str(move.moves[0].fromColumn))
         return move
 
-    # calculate value of state using minimax (no alpha-beta pruning yet - need to make sure it works as it is first)
+    # calculate value of state using minimax  with alpha-beta pruning
     # based on pseudo-code from https://en.wikipedia.org/wiki/Minimax
-    def minimax_alphabeta(self, depth, alpha, beta, maximizing_player) -> [int, LegalMove]:
-        if depth == 0 or self.is_game_over():  # game over == terminal node
-            return self.get_state_value(maximizing_player), LegalMove(0, 0, 0, [])
+    def minimax_alphabeta(self, depth, alpha, beta, is_maximizing) -> [int, LegalMove]:
+        moves = self.get_all_legal_moves()
+        if depth == 0 or self.is_game_over(moves)[0]:  # game over == terminal node
+            return self.get_state_value(is_maximizing), LegalMove(0, 0, 0, [])
         move_to_return = LegalMove(0, 0, 0, [])
-        if maximizing_player:
+        if is_maximizing:
             val = -sys.maxsize - 1
-            for row in range(8):
-                for column in range(8):
-                    if self.board[row][column].piece.color == self.activePlayer:
-                        for move in self.board[row][column].possibleMoves:
-                            state_copy = copy.deepcopy(self)
-                            state_copy.update_game_state_with_move_helper(move)
-                            state_copy.switch_player()
-                            state_copy.get_all_legal_moves()
-                            new_val, m = state_copy.minimax_alphabeta(depth - 1, alpha, beta, False)
-                            if new_val > val:
-                                val = new_val
-                                move_to_return = move
-                            if beta <= val:
-                                return new_val, move
-                            if alpha < val:
-                                alpha = val
-                                move_to_return = move
+            for move in moves:
+                state_copy = GameState(copy.deepcopy(self.board), self.emptyMoves, self.activePlayer)
+                state_copy.update_game_state_with_move_helper(move)
+                state_copy.switch_player()
+                new_val, m = state_copy.minimax_alphabeta(depth - 1, alpha, beta, False)
+                if new_val > val:
+                    val = new_val
+                    move_to_return = move
+                if beta <= val:
+                    return new_val, move
+                if alpha < val:
+                    alpha = val
+                    move_to_return = move
             return val, move_to_return
         else:  # (*minimizing player *)
             val = sys.maxsize
-            for row in range(8):
-                for column in range(8):
-                    if self.board[row][column].piece.color == self.activePlayer:
-                        for move in self.board[row][column].possibleMoves:
-                            state_copy = copy.deepcopy(self)
-                            state_copy.update_game_state_with_move_helper(move)
-                            state_copy.switch_player()
-                            state_copy.get_all_legal_moves()
-                            new_val, m = state_copy.minimax_alphabeta(depth - 1, alpha, val, True)
-                            if new_val < val:
-                                val = new_val
-                                move_to_return = move
-                            if val <= alpha:
-                                return val, move_to_return
-                            if val < beta:
-                                beta = val
-                                move_to_return = move
+            for move in moves:
+                state_copy = GameState(copy.deepcopy(self.board), self.emptyMoves, self.activePlayer)
+                state_copy.update_game_state_with_move_helper(move)
+                state_copy.switch_player()
+                new_val, m = state_copy.minimax_alphabeta(depth - 1, alpha, val, True)
+                if new_val < val:
+                    val = new_val
+                    move_to_return = move
+                if val <= alpha:
+                    return val, move_to_return
+                if val < beta:
+                    beta = val
+                    move_to_return = move
             return val, move_to_return
