@@ -251,6 +251,9 @@ class GamePage(Page):
                 self.scroll -= 1
             elif client and client.has_current_game and event.button == 5:
                 self.scroll += 1
+        elif self.AIgame and self.gameState.activePlayer == 1 and not self.gameState.is_game_over(self.gameState.get_all_legal_moves())[0]:
+            self.gameState.update_game_state_with_move_helper(self.gameState.get_ai_move(self.AIdepth))
+            self.gameState.switch_player()
 
     def get_text_input(self, events, client):
         if client and client.has_current_game:
@@ -264,6 +267,10 @@ class GamePage(Page):
         if self.networked_game and not client.has_current_game:
             update_page(TwoPlayerOptions())
             return
+        if self.AIgame and self.gameState.is_game_over(self.gameState.get_all_legal_moves())[0]:
+            is_win = self.check_win(self.gameState.get_all_legal_moves())
+            if is_win != -1:
+                update_page(WinPage(is_win))
         if client and client.has_current_game:
             self.scroll = load_chatbox(self.image, client.messages, self.scroll, self.textinput.get_text())
             self.board = client.board
@@ -272,12 +279,7 @@ class GamePage(Page):
             self.board = self.gameState.get_board_for_network()
             self.possible_moves = self.gameState.send_possible_moves_for_network()
         self.piece.draw_pieces(self.image, self.board, self.possible_moves, self.initial_click)
-        if self.AIgame and self.gameState.activePlayer == 1 and not self.gameState.is_game_over(self.gameState.get_all_legal_moves())[0]:
-            self.gameState.update_game_state_with_move_helper(self.gameState.get_ai_move(self.AIdepth))
-            self.gameState.switch_player()
-            is_win = self.check_win(self.gameState.get_all_legal_moves())
-            if is_win != -1:
-                update_page(WinPage(is_win))
+
 
     def load_background(self):
         lower = 65
