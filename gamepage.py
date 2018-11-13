@@ -134,6 +134,42 @@ class Settings(Page):
 		pg.draw.rect(self.image, brown_color, (100, 150, 150, 30), 2)
 		self.image.blit(render_text(20, "Update Username", black_color)[0], (120, 160))
 
+class red_selection(Page):
+	def load_background(self):
+		# TODO: update these numbers -- looks good on the Mac.
+		render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
+		self.image.blit(render_text(25, "Select color", black_color)[0], (255, 320))
+		select_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
+
+	def load_buttons(self, update_page=None, update_client=None, client=None):
+		self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(red_selection()))
+		self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(black_selection()))
+
+		draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
+		draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
+		self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
+		self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
+		self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
+		self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: update_page(Intro()))	
+
+
+class black_selection(Page):
+	def load_background(self):
+		# TODO: update these numbers -- looks good on the Mac.
+		render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
+		self.image.blit(render_text(25, "Select color", black_color)[0], (255, 320))
+		select_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
+
+	def load_buttons(self, update_page=None, update_client=None, client=None):
+		self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(red_selection()))
+		self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(black_selection()))
+
+		draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
+		draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
+		self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
+		self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
+		self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
+		self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: update_page(Intro()))	
 
 
 
@@ -143,15 +179,19 @@ class OnePlayerOptions(Page):
 		render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
 		self.image.blit(render_text(25, "Select color", black_color)[0], (255, 320))
 
+
+
 	def load_buttons(self, update_page=None, update_client=None, client=None):
-		self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
-		self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
+		self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(red_selection()))
+		self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(black_selection()))
 		draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
 		draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
 		self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
 		self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
 		self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
 		self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: update_page(Intro()))	
+
+
 
 class TwoPlayerOptions(Page):
 	def __init__(self):
