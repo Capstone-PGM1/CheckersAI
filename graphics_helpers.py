@@ -26,6 +26,7 @@ gold_outline = (216, 171, 23)
 tan_color = (242, 221, 179)
 tan_highlight = (242, 235, 222)
 light_green = (83, 249, 88)
+brown_color = (91, 63, 27)
 
 is_mac = os.name == 'java'
 
@@ -46,7 +47,8 @@ def draw_circle(x, y, color, outline_color, circle_radius, outline_radius, windo
 
 def render_text(font_size, message, color):
     scale = 1 if is_mac else 0.8
-    myfont = pg.font.SysFont('Arial', int(font_size * scale), not is_mac)
+    # myfont = pg.font.SysFont('Helvetica', int(font_size * scale), not is_mac)
+    myfont = pg.font.Font("Carlito-BoldItalic.ttf", int(font_size * scale))
     textsurface = myfont.render(message, False, color)
     return textsurface, textsurface.get_rect()
 
@@ -57,6 +59,7 @@ def render_centered_text(font_size, message, color, top_left_x, top_left_y, widt
 
 def render_centered_text_with_background(font_size, message, color, top_left_x, top_left_y, width, height, image, background):
     pg.draw.rect(image, background, [top_left_x, top_left_y, width, height])
+    pg.draw.rect(image, brown_color, [top_left_x, top_left_y, width, height], 2)
     render_centered_text(font_size, message, color, top_left_x, top_left_y, width, height, image)
 
 def load_grey_tiles(window, lower1, upper1, lower2, upper2, n):
