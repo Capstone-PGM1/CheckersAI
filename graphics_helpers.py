@@ -34,11 +34,15 @@ def draw_red_circle(x, y, circle_radius, outline_radius, window: pg.Surface):
     pg.draw.circle(window, red_outline, (x, y), outline_radius)
     pg.draw.circle(window, red_color, (x, y), circle_radius, 0)
 
+def select_red_circle(x, y, circle_radius, outline_radius, window: pg.Surface):
+    pg.draw.circle(window, light_green, (x, y), outline_radius + 5, 10)
 
 def draw_black_circle(x, y, circle_radius, outline_radius, window: pg.Surface):
     pg.draw.circle(window, black_outline, (x, y), outline_radius)
     pg.draw.circle(window, black_color, (x, y), circle_radius)
 
+def select_black_circle(x, y, circle_radius, outline_radius, window: pg.Surface):
+    pg.draw.circle(window, light_green, (x, y), outline_radius + 5, 10)
 
 def draw_circle(x, y, color, outline_color, circle_radius, outline_radius, window: pg.Surface):
     pg.draw.circle(window, outline_color, (x, y), outline_radius)
