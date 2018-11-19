@@ -6,7 +6,7 @@ https://github.com/Mekire/pygame-samples/blob/master/resizable/resizable_aspect_
 from graphics_helpers import *
 from client import *
 from pygame_textinput import *
-
+from classes import *
 
 class Pieces(object):
     def draw_pieces(self, window, board, possible_moves, selected):
@@ -126,10 +126,13 @@ class Settings(Page):
         draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
         self.button("Sound On", 50, 150, 100, 20, tan_color, tan_highlight, lambda: print("sound is now on"))
         self.button("Sound Off", 175, 150, 100, 20, tan_color, tan_highlight, lambda: print("sound is now off"))
-        self.button("List Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client())
-        self.button("2 player page", 350, 185, 150, 30, tan_color, tan_highlight,
-                    lambda: update_page(TwoPlayerOptions()))
         pg.draw.rect(self.image, tan_color, (210, 230, 180, 30))
+
+        if (client):
+            self.button("Don't play online", 350, 150, 150, 30, tan_color, tan_highlight,
+                        lambda: update_client(None))
+        else:
+            self.button("List Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client(startClient()))
 
         self.image.blit(render_text(20, "Update Username", black_color)[0], (215, 230))
         pg.draw.rect(self.image, tan_color, (210, 270, 180, 30))
@@ -171,11 +174,11 @@ class TwoPlayerOptions(Page):
         self.button("Local Game", 100, 150, 180, 30, tan_color, tan_highlight, lambda: update_page(GamePage(False)))
 
         if not client:
-            self.button("Play Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client())
+            self.button("Play Online", 100, 200, 180, 30, tan_color, tan_highlight, lambda: update_client(startClient()))
         else:
             if client.has_current_game:
                 update_page(GamePage(False, networked_game = True))
-
+            self.button("Don't play online", 100, 200, 180, 30, tan_color, tan_highlight, lambda: update_client(None))
             self.show_available_players(client)
         self.show_message(client)
 
@@ -216,11 +219,11 @@ class TwoPlayerOptions(Page):
                             lambda: client.respond_to_challenge(False))
             if self.timeout == 0:
                 client.game_message = ""
+                client.pending_challenge = None
 
         if self.timeout == 0:
             self.message = ""
             self.timeout = 45
-            client.pending_challenge = None
         if self.timeout:
             render_centered_text(30, self.message, black_color, 100, 370, 400, 20, self.image)
 
@@ -451,7 +454,7 @@ class ScreenControl(object):
         self.image_rect = self.image.get_rect()
         self.scale = 1
         self.clock = pg.time.Clock()
-        self.fps = 15.0
+        self.fps = 10.0
         self.done = False
         self.keys = pg.key.get_pressed()
         self.client = None
@@ -502,9 +505,9 @@ class ScreenControl(object):
     def set_page(self, page):
         self.page = page
 
-    def set_client(self):
-        if not self.client:
-            self.client = startClient()
+    def set_client(self, client):
+        print('clicked')
+        self.client = client
 
     def set_done(self, done):
         self.done = done

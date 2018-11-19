@@ -1,9 +1,6 @@
 from PodSixNet.Connection import connection, ConnectionListener
 
-from gamestate import *
-from time import sleep, time
-from datetime import datetime
-import sys
+from time import sleep
 
 class PendingChallenge:
     def __init__(self, challengeTo, challengeFrom):
@@ -38,10 +35,6 @@ class Client(ConnectionListener):
     def Network_disconnected(self, data):
         self.error = True
         self.game_message = "The server has disconnected."
-
-    #
-    # def __del__(self):
-    #     connection.Send({"action": "disconnected", "id": self.id})
 
     def Network_receiveId(self, data):
         self.id = data['id']
