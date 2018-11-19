@@ -6,7 +6,7 @@ https://github.com/Mekire/pygame-samples/blob/master/resizable/resizable_aspect_
 from graphics_helpers import *
 from client import *
 from pygame_textinput import *
-
+from classes import *
 
 class Pieces(object):
 	def draw_pieces(self, window, board, possible_moves, selected):
@@ -129,11 +129,16 @@ class Settings(Page):
 		self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: update_page(Intro()))		
 		self.button("List Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client())
 		self.button("2 player page", 350, 185, 150, 30, tan_color, tan_highlight,
-					lambda: update_page(TwoPlayerOptions()))
+						lambda: update_page(TwoPlayerOptions()))
+		if (client):
+			self.button("Don't play online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client(None))
+		else:
+			self.button("List Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client(startClient()))
 		pg.draw.rect(self.image, tan_color, (100, 150, 150, 30))
 		pg.draw.rect(self.image, brown_color, (100, 150, 150, 30), 2)
 		self.image.blit(render_text(20, "Update Username", black_color)[0], (120, 160))
-
+ 
+    
 class red_selection(Page):
 	def load_background(self):
 		# TODO: update these numbers -- looks good on the Mac.
@@ -194,238 +199,240 @@ class OnePlayerOptions(Page):
 
 
 class TwoPlayerOptions(Page):
-	def __init__(self):
-		Page.__init__(self)
-		self.scroll = 0
+    def __init__(self, message = ""):
+        Page.__init__(self)
+        self.scroll = 0
+        self.message = message
+        self.timeout = 45
 
-	def handle_event(self, event, set_page, client):
-		if event.type == pg.MOUSEBUTTONDOWN:
-			if event.button == 4:
-				self.scroll -= 1
-			elif event.button == 5:
-				self.scroll += 1
+    def handle_event(self, event, set_page, client):
+        if event.type == pg.MOUSEBUTTONDOWN:
+            if event.button == 4:
+                self.scroll -= 1
+            elif event.button == 5:
+                self.scroll += 1
 
-	def load_background(self):
-		# TODO: Update the numbers as necessary.
-		render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
+    def load_background(self):
+        render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
 
-	def load_buttons(self, update_page=None, update_client=None, client=None):
-		self.button("Local Game", 100, 150, 180, 30, tan_color, tan_highlight, lambda: update_page(GamePage(False)))
-		self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: update_page(Intro()))	
-		if not client:
-			self.button("Play Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client())
-		else:
-			render_centered_text_with_background(30, "Available players", black_color, 350, 150, 180, 30, self.image,
-												 tan_color)
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        self.button("Local Game", 100, 150, 180, 30, tan_color, tan_highlight, lambda: update_page(GamePage(False)))
+        self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: update_page(Intro()))	
+        if not client:
+            self.button("Play Online", 100, 200, 180, 30, tan_color, tan_highlight, lambda: update_client(startClient()))
+        else:
+            if client.has_current_game:
+                update_page(GamePage(False, networked_game = True))
+            self.button("Don't play online", 100, 200, 180, 30, tan_color, tan_highlight, lambda: update_client(None))
+            self.show_available_players(client)
+        self.show_message(client)
 
-			# TODO: Update the numbers as necessary.
-			xNum = 350
-			yNum = 200
+    def show_available_players(self, client):
+        render_centered_text_with_background(30, "Available players", black_color, 350, 150, 180, 30, self.image,
+                                             tan_color)
+        xNum = 350
+        yNum = 200
+        if hasattr(client, "other_players"):
+            pygame.draw.rect(self.image, tan_color, [xNum, yNum, 180, 150])
+            if len(client.other_players) == 0:
+                render_centered_text_with_background(30, "None", black_color, xNum, yNum, 180, 150,
+                                                     self.image, tan_color)
 
-			if hasattr(client, "other_players"):
-				pygame.draw.rect(self.image, tan_color, [xNum, yNum, 180, 150])
-				if len(client.other_players) == 0:
-					render_centered_text_with_background(30, "None", black_color, xNum, yNum, 180, 150,
-														 self.image, tan_color)
+            else:
+                self.scroll = drawText(self.image,
+                                       client.other_players,
+                                       black_color,
+                                       [xNum, yNum, 180, 150],
+                                       self.scroll,
+                                       self.button,
+                                       30,
+                                       5,
+                                       lambda player: client.send_challenge(player))
 
-				else:
-					self.scroll = drawText(self.image,
-							 client.other_players,
-							 black_color,
-							 [xNum, yNum, 180, 150],
-							 self.scroll,
-							 self.button,
-							 30,
-							 5,
-							 lambda player : client.send_challenge(player))
+    def show_message(self, client):
+        self.timeout -= 1
 
-			if client.has_current_game:
-				update_page(GamePage(False, networked_game = True))
+        if client:
+            if self.message != client.game_message:
+                self.message = client.game_message
+                self.timeout = 45
 
-			if client.rejected_challenge:
-				# TODO: Ugly way to make sure the message that the challenge was rejected stays on the screen.
-				if hasattr(self, 'timeout'):
-					self.timeout -= 1
-				else:
-					self.timeout = 20
-				if self.timeout == 0:
-					client.acknowledge_rejected_challenge()
-				else:
-					render_centered_text(30, "Your challenge to {} was rejected".format(client.rejected_challenge),
-										 black_color, xNum, yNum, 75, 20, self.image)
+            if client.pending_challenge and client.pending_challenge.challenge_to == client.id:
+                self.button("Accept", 210, 400, 75, 20, tan_color, tan_highlight,
+                            lambda: client.respond_to_challenge(True))
+                self.button("Decline", 315, 400, 75, 20, tan_color, tan_highlight,
+                            lambda: client.respond_to_challenge(False))
+            if self.timeout == 0:
+                client.game_message = ""
+                client.pending_challenge = None
 
-			# TODO: The pending challenge and rejected challenge would overlap if both show at the same time.
-			if client.pending_challenge:
-				if client.pending_challenge.challenge_to == client.id:
-					render_centered_text(30, "You have received a challenge from {}".format(
-						client.pending_challenge.challenge_from), black_color, 100, 370, 400, 20, self.image)
-					self.button("Accept", 210, 400, 75, 20, tan_color, tan_highlight,
-								lambda: client.respond_to_challenge(True))
-					self.button("Decline", 315, 400, 75, 20, tan_color, tan_highlight,
-								lambda: client.respond_to_challenge(False))
-				else:
-					render_centered_text(30, "Waiting for player {} to respond.".format(
-						str(client.pending_challenge.challenge_to)),
-										 black_color, 100, 370, 400, 20, self.image)
+        if self.timeout == 0:
+            self.message = ""
+            self.timeout = 45
+        if self.timeout:
+            render_centered_text(30, self.message, black_color, 100, 370, 400, 20, self.image)
 
-	def __del__(self):
-		if hasattr(self, 'timeout'):
-			self.timeout = 0
+
+    def __del__(self):
+        if hasattr(self, 'timeout'):
+            self.timeout = 0
 
 
 class GamePage(Page):
-	def __init__(self, ai_game=False, ai_depth = 1, networked_game = False):
-		Page.__init__(self)
-		self.initial_click = None
-		self.piece = Pieces()
-		self.gameState = GameState()
-		self.board = self.gameState.get_board_for_network()
-		self.possible_moves = []
-		self.AIgame = ai_game
-		self.scroll = 0
-		self.textinput = TextInput(repeat_keys_interval_ms=100)
-		self.networked_game = networked_game
-		self.AIdepth = ai_depth
+    def __init__(self, ai_game=False, ai_depth = 1, networked_game = False):
+        Page.__init__(self)
+        self.initial_click = None
+        self.piece = Pieces()
+        self.gameState = GameState()
+        self.board = self.gameState.get_board_for_network()
+        self.possible_moves = []
+        self.AIgame = ai_game
+        self.scroll = 0
+        self.textinput = TextInput(repeat_keys_interval_ms=100)
+        self.networked_game = networked_game
+        self.AIdepth = ai_depth
 
-	def handle_event(self, event, set_page, client):
-		if (self.gameState.activePlayer == 0 or not self.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
-			self.handleGameClick(set_page, client)
-			if client and client.has_current_game and event.button == 4:
-				self.scroll -= 1
-			elif client and client.has_current_game and event.button == 5:
-				self.scroll += 1
+    def handle_event(self, event, set_page, client):
+        if (self.gameState.activePlayer == 0 or not self.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
+            self.handleGameClick(set_page, client)
+            if client and client.has_current_game and event.button == 4:
+                self.scroll -= 1
+            elif client and client.has_current_game and event.button == 5:
+                self.scroll += 1
+        elif self.AIgame and self.gameState.activePlayer == 1 and not self.gameState.is_game_over(self.gameState.get_all_legal_moves())[0]:
+            self.gameState.update_game_state_with_move_helper(self.gameState.get_ai_move(self.AIdepth))
+            self.gameState.switch_player()
 
-	def get_text_input(self, events, client):
-		if client and client.has_current_game:
-			if self.textinput.update(events):
-				text = self.textinput.get_text()
-				if text:
-					client.sendMessage(self.textinput.get_text())
-					self.textinput.clear_text()
+    def get_text_input(self, events, client):
+        if client and client.has_current_game:
+            if self.textinput.update(events):
+                text = self.textinput.get_text()
+                if text:
+                    client.sendMessage(self.textinput.get_text())
+                    self.textinput.clear_text()
 
-	def load_buttons(self, update_page=None, update_client=None, client=None):
-		if self.networked_game and not client.has_current_game:
-			update_page(TwoPlayerOptions())
-			return
-		if client and client.has_current_game:
-			self.scroll = load_chatbox(self.image, client.messages, self.scroll, self.textinput.get_text())
-			self.board = client.board
-			self.possible_moves = client.possible_moves if client.possible_moves else []
-		else:
-			self.board = self.gameState.get_board_for_network()
-			self.possible_moves = self.gameState.send_possible_moves_for_network()
-		self.piece.draw_pieces(self.image, self.board, self.possible_moves, self.initial_click)
-		if self.AIgame and self.gameState.activePlayer == 1 and not self.gameState.is_game_over(self.gameState.get_all_legal_moves())[0]:
-			self.gameState.update_game_state_with_move_helper(self.gameState.get_ai_move(self.AIdepth))
-			self.gameState.switch_player()
-			is_win = self.check_win(self.gameState.get_all_legal_moves())
-			if is_win != -1:
-				update_page(WinPage(is_win))
-		self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: update_page(Intro()))	
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        if self.networked_game and not client.has_current_game:
+            update_page(TwoPlayerOptions())
+            return
+        if self.AIgame and self.gameState.is_game_over(self.gameState.get_all_legal_moves())[0]:
+            is_win = self.check_win(self.gameState.get_all_legal_moves())
+            if is_win != -1:
+                update_page(WinPage(is_win))
+        elif client and client.has_current_game:
+            self.scroll = load_chatbox(self.image, client.messages, self.scroll, self.textinput.get_text())
+            self.board = client.board
+            self.possible_moves = client.possible_moves if client.possible_moves else []
+        else:
+            self.board = self.gameState.get_board_for_network()
+            self.possible_moves = self.gameState.send_possible_moves_for_network()
+        self.piece.draw_pieces(self.image, self.board, self.possible_moves, self.initial_click)
 
-	def load_background(self):
-		lower = 65
-		upper = 105
 
-		for i in range(8):
-			for x in range(lower, upper, tile_size):
-				for y in range(lower, upper, tile_size):
-					self.image.blit(Tiles.greyTile, (x, y))
-					pg.draw.rect(self.image, black_color, (x, y, tile_size, tile_size), 1)
-				lower += 40
-				upper += 40
+    def load_background(self):
+        lower = 65
+        upper = 105
 
-		lower1, upper1, lower2, upper2, = 145, 185, 65, 105
-		load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 6)
+        for i in range(8):
+            for x in range(lower, upper, tile_size):
+                for y in range(lower, upper, tile_size):
+                    self.image.blit(Tiles.greyTile, (x, y))
+                    pg.draw.rect(self.image, black_color, (x, y, tile_size, tile_size), 1)
+                lower += 40
+                upper += 40
 
-		lower1, upper1, lower2, upper2, = 225, 265, 65, 105
-		load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 4)
+        lower1, upper1, lower2, upper2, = 145, 185, 65, 105
+        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 6)
 
-		lower1, upper1, lower2, upper2, = 305, 346, 65, 105
-		load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 1)
+        lower1, upper1, lower2, upper2, = 225, 265, 65, 105
+        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 4)
 
-		lower1, upper1, lower2, upper2, = 65, 105, 145, 185
-		load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 6)
+        lower1, upper1, lower2, upper2, = 305, 346, 65, 105
+        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 1)
 
-		lower1, upper1, lower2, upper2, = 65, 105, 225, 265
-		load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 4)
+        lower1, upper1, lower2, upper2, = 65, 105, 145, 185
+        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 6)
 
-		lower1, upper1, lower2, upper2, = 65, 105, 305, 345
-		load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 2)
+        lower1, upper1, lower2, upper2, = 65, 105, 225, 265
+        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 4)
 
-		# draw white tiles
-		lower1, upper1, lower2, upper2, = 105, 145, 65, 105
-		load_white_tiles(self.image, lower1, upper1, lower2, upper2, 7)
+        lower1, upper1, lower2, upper2, = 65, 105, 305, 345
+        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 2)
 
-		lower1, upper1, lower2, upper2, = 185, 225, 65, 105
-		load_white_tiles(self.image, lower1, upper1, lower2, upper2, 5)
+        # draw white tiles
+        lower1, upper1, lower2, upper2, = 105, 145, 65, 105
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 7)
 
-		lower1, upper1, lower2, upper2, = 265, 305, 65, 105
-		load_white_tiles(self.image, lower1, upper1, lower2, upper2, 3)
+        lower1, upper1, lower2, upper2, = 185, 225, 65, 105
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 5)
 
-		lower1, upper1, lower2, upper2, = 345, 385, 65, 105
-		load_white_tiles(self.image, lower1, upper1, lower2, upper2, 1)
+        lower1, upper1, lower2, upper2, = 265, 305, 65, 105
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 3)
 
-		lower1, upper1, lower2, upper2, = 65, 105, 105, 145
-		load_white_tiles(self.image, lower1, upper1, lower2, upper2, 7)
+        lower1, upper1, lower2, upper2, = 345, 385, 65, 105
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 1)
 
-		lower1, upper1, lower2, upper2, = 65, 105, 185, 225
-		load_white_tiles(self.image, lower1, upper1, lower2, upper2, 5)
+        lower1, upper1, lower2, upper2, = 65, 105, 105, 145
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 7)
 
-		lower1, upper1, lower2, upper2, = 65, 105, 265, 305
-		load_white_tiles(self.image, lower1, upper1, lower2, upper2, 3)
+        lower1, upper1, lower2, upper2, = 65, 105, 185, 225
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 5)
 
-		lower1, upper1, lower2, upper2, = 65, 105, 345, 385
-		load_white_tiles(self.image, lower1, upper1, lower2, upper2, 1)
+        lower1, upper1, lower2, upper2, = 65, 105, 265, 305
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 3)
 
-		# game border
-		for x in range(55, 65, 10):
-			for y in range(65, 385, 10):
-				self.image.blit(Tiles.blackTile, (x, y))
+        lower1, upper1, lower2, upper2, = 65, 105, 345, 385
+        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 1)
 
-		for x in range(385, 395, 10):
-			for y in range(65, 385, 10):
-				self.image.blit(Tiles.blackTile, (x, y))
+        # game border
+        for x in range(55, 65, 10):
+            for y in range(65, 385, 10):
+                self.image.blit(Tiles.blackTile, (x, y))
 
-		for x in range(55, 395, 10):
-			for y in range(55, 65, 10):
-				self.image.blit(Tiles.blackTile, (x, y))
+        for x in range(385, 395, 10):
+            for y in range(65, 385, 10):
+                self.image.blit(Tiles.blackTile, (x, y))
 
-		for x in range(55, 395, 10):
-			for y in range(385, 395, 10):
-				self.image.blit(Tiles.blackTile, (x, y))
+        for x in range(55, 395, 10):
+            for y in range(55, 65, 10):
+                self.image.blit(Tiles.blackTile, (x, y))
 
-	def check_win(self, possible_moves):
-		is_win, winner = self.gameState.is_game_over(possible_moves)
-		if is_win:
-			return winner
-		return -1
+        for x in range(55, 395, 10):
+            for y in range(385, 395, 10):
+                self.image.blit(Tiles.blackTile, (x, y))
 
-	def handleGameClick(self, update_page, client):
-		pos = pygame.mouse.get_pos()
-		image_x = self.screen_rect.center[0] - (SCREEN_START_SIZE[0] * self.scale) / 2
-		image_y = self.screen_rect.center[1] - (SCREEN_START_SIZE[1] * self.scale) / 2
-		col = int((((pos[0] - image_x) / self.scale - 25) // 40) - 1)
-		row = int((((pos[1] - image_y) / self.scale - 25) // 40) - 1)
-		made_move = False
-		game = client if client and client.has_current_game else self.gameState
+    def check_win(self, possible_moves):
+        is_win, winner = self.gameState.is_game_over(possible_moves)
+        if is_win:
+            return winner
+        return -1
 
-		if self.initial_click and self.initial_click in self.possible_moves:
-			for possibleMove in self.possible_moves[self.initial_click]:
-				if row == possibleMove['endRow'] and col == possibleMove['endColumn']:
-					print("moved from " + str(self.initial_click) + " to (" + str(row) + ", " + str(col) + ")")
-					made_move = True
-					game.update_game_state_with_move(self.initial_click[0], self.initial_click[1], row, col)
-			if not made_move:
-				print("cannot move from " + str(self.initial_click) + " to (" + str(row) + ", " + str(col) + ")")
-				self.initial_click = None
+    def handleGameClick(self, update_page, client):
+        pos = pygame.mouse.get_pos()
+        image_x = self.screen_rect.center[0] - (SCREEN_START_SIZE[0] * self.scale) / 2
+        image_y = self.screen_rect.center[1] - (SCREEN_START_SIZE[1] * self.scale) / 2
+        col = int((((pos[0] - image_x) / self.scale - 25) // 40) - 1)
+        row = int((((pos[1] - image_y) / self.scale - 25) // 40) - 1)
+        made_move = False
+        game = client if client and client.has_current_game else self.gameState
 
-		if (row, col) in self.possible_moves:
-			self.initial_click = (row, col)
-		if made_move:
-			is_win = self.check_win(self.gameState.get_all_legal_moves())
-			if is_win != -1:
-				update_page(WinPage(is_win))
+        if self.initial_click and self.initial_click in self.possible_moves:
+            for possibleMove in self.possible_moves[self.initial_click]:
+                if row == possibleMove['endRow'] and col == possibleMove['endColumn']:
+                    print("moved from " + str(self.initial_click) + " to (" + str(row) + ", " + str(col) + ")")
+                    made_move = True
+                    game.update_game_state_with_move(self.initial_click[0], self.initial_click[1], row, col)
+            if not made_move:
+                print("cannot move from " + str(self.initial_click) + " to (" + str(row) + ", " + str(col) + ")")
+                self.initial_click = None
+
+        if (row, col) in self.possible_moves:
+            self.initial_click = (row, col)
+        if made_move:
+            is_win = self.check_win(self.gameState.get_all_legal_moves())
+            if is_win != -1:
+                update_page(WinPage(is_win))
+
 
 
 # TODO: add a 'replay' button?
@@ -486,65 +493,73 @@ class WinPage(Page):
 
 
 class ScreenControl(object):
-	def __init__(self):
-		pg.init()
-		pg.display.set_caption(CAPTION)
-		self.screen = pg.display.set_mode(SCREEN_START_SIZE, pg.RESIZABLE)
-		self.screen_rect = self.screen.get_rect()
-		self.image = pg.Surface(SCREEN_START_SIZE).convert()
-		self.image_rect = self.image.get_rect()
-		self.scale = 1
-		self.clock = pg.time.Clock()
-		self.fps = 15.0
-		self.done = False
-		self.keys = pg.key.get_pressed()
-		self.client = None
-		self.page = Intro()
-		self.scroll = 0
+    def __init__(self):
+        pg.init()
+        pg.display.set_caption(CAPTION)
+        self.screen = pg.display.set_mode(SCREEN_START_SIZE, pg.RESIZABLE)
+        self.screen_rect = self.screen.get_rect()
+        self.image = pg.Surface(SCREEN_START_SIZE).convert()
+        self.image_rect = self.image.get_rect()
+        self.scale = 1
+        self.clock = pg.time.Clock()
+        self.fps = 10.0
+        self.done = False
+        self.keys = pg.key.get_pressed()
+        self.client = None
+        self.page = Intro()
+        self.scroll = 0
 
-	def screen_event(self):
-		events = pg.event.get()
-		for event in events:
-			self.keys = pg.key.get_pressed()
-			if event.type == pg.QUIT or self.keys[pg.K_ESCAPE]:
-				self.done = True
-			elif event.type == pg.VIDEORESIZE:
-				self.screen = pg.display.set_mode(event.size, pg.RESIZABLE)
-				self.screen_rect = self.screen.get_rect()
-			else:
-				self.page.handle_event(event, self.set_page, self.client)
-		self.page.get_text_input(events, self.client)
-		if self.client:
-			self.client.pump()
+    def screen_event(self):
+        events = pg.event.get()
+        for event in events:
+            self.keys = pg.key.get_pressed()
+            if event.type == pg.QUIT or self.keys[pg.K_ESCAPE]:
+                self.done = True
+            elif event.type == pg.VIDEORESIZE:
+                self.screen = pg.display.set_mode(event.size, pg.RESIZABLE)
+                self.screen_rect = self.screen.get_rect()
+            else:
+                self.page.handle_event(event, self.set_page, self.client)
+        self.page.get_text_input(events, self.client)
+        if self.client:
+            self.client.pump()
 
-	def screen_update(self):
-		self.page.update(self.image, self.screen_rect, self.scale, self.set_page, self.set_done, self.set_client,
-						 self.client)
-		if self.screen_rect.size != SCREEN_START_SIZE:
-			fit_to_rect = self.image_rect.fit(self.screen_rect)
-			fit_to_rect.center = self.screen_rect.center
-			scaled = pg.transform.smoothscale(self.image, fit_to_rect.size)
-			self.scale = fit_to_rect.width / SCREEN_START_SIZE[0]
-			self.screen.blit(scaled, fit_to_rect)
-		else:
-			self.screen.blit(self.image, (0, 0))
+    def screen_update(self):
+        self.page.update(self.image, self.screen_rect, self.scale, self.set_page, self.set_done, self.set_client,
+                         self.client)
+        if self.screen_rect.size != SCREEN_START_SIZE:
+            fit_to_rect = self.image_rect.fit(self.screen_rect)
+            fit_to_rect.center = self.screen_rect.center
+            scaled = pg.transform.smoothscale(self.image, fit_to_rect.size)
+            self.scale = fit_to_rect.width / SCREEN_START_SIZE[0]
+            self.screen.blit(scaled, fit_to_rect)
+        else:
+            self.screen.blit(self.image, (0, 0))
 
-	def main(self):
-		while not self.done:
-			self.screen_event()
-			self.screen_update()
-			pg.display.update()
-			self.clock.tick(self.fps)
+    def main(self):
+        while not self.done:
+            if self.client and self.client.error:
+                print("in main")
+                self.client = None
+                if isinstance(self.page, GamePage) and self.client.has_current_game:
+                    self.page = TwoPlayerOptions("There was a problem connecting to the server.")
+                elif isinstance(self.page, TwoPlayerOptions):
+                    self.page = TwoPlayerOptions("There was a problem connecting to the server.")
+            self.screen_event()
+            self.screen_update()
+            pg.display.update()
+            self.clock.tick(self.fps)
 
-	def set_page(self, page):
-		self.page = page
+    def set_page(self, page):
+        self.page = page
 
-	def set_client(self):
-		if not self.client:
-			self.client = startClient()
+    def set_client(self, client):
+        print('clicked')
+        self.client = client
 
-	def set_done(self, done):
-		self.done = done
+    def set_done(self, done):
+        self.done = done
+
 
 
 if __name__ == "__main__":
