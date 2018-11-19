@@ -31,16 +31,11 @@ class Client(ConnectionListener):
         "connected to the server"
 
     def Network_error(self, data):
-        print("received error message")
-        # print
-        # "error:", data['error'][1][
-        # raise ConnectionRefusedError
         self.error = True
         if ("error_message" in data):
             self.game_message = data['error_message']
 
     def Network_disconnected(self, data):
-        print("received a disconnect from the server")
         self.error = True
         self.game_message = "The server has disconnected."
 
@@ -126,6 +121,7 @@ class Client(ConnectionListener):
 
 def startClient():
     #  TODO: make this a real server one day.
+    # return Client('45.33.41.181', 12345)
     return Client('localhost', 12345)
 
 if __name__ == '__main__':
