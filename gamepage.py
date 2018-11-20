@@ -288,7 +288,9 @@ class GamePage(Page):
         self.possible_moves = []
         self.AIgame = ai_game
         self.scroll = 0
-        self.textinput = TextInput(repeat_keys_interval_ms=100)
+        self.count = 0
+        # Weird variables -- basically it prevents the game from reading the same key being pressed too many times.
+        self.textinput = TextInput(repeat_keys_initial_ms=40000, repeat_keys_interval_ms=40000)
         self.networked_game = networked_game
         self.AIdepth = ai_depth
 
@@ -306,6 +308,8 @@ class GamePage(Page):
     def get_text_input(self, events, client):
         if client and client.has_current_game:
             if self.textinput.update(events):
+                print('pressed enter: {}'.format(self.count))
+                self.count += 1
                 text = self.textinput.get_text()
                 if text:
                     client.sendMessage(self.textinput.get_text())
