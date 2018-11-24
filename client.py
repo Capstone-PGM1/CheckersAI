@@ -102,6 +102,9 @@ class Client(ConnectionListener):
     def update_game_state_with_move(self, start_row, start_column, end_row, end_column):
         connection.Send({"action": "updateBoard", "move": {"startRow": start_row, "startColumn": start_column, "endRow": end_row, "endCol": end_column}, "id": self.id})
 
+    def resign_game(self):
+        connection.Send({"action": "endGame", 'id': self.id})
+
     # This method deals with the chat room.
     def Network_message(self, data):
         self.messages.append("{}: {}".format(data['playerName'], data['message']))

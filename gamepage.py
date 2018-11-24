@@ -9,193 +9,208 @@ from pygame_textinput import *
 from classes import *
 
 class Pieces(object):
-	def draw_pieces(self, window, board, possible_moves, selected):
-		# TODO: this always shows black on the bottom of the screen.
-		for item in board:
-			is_possible = (item[0], item[1]) in possible_moves
-			is_selected = True if selected == item else False
-			color = 'red' if board[item] == 'r' or board[item] == 'R' else 'black'
-			is_king = True if board[item] == 'R' or board[item] == 'B' else False
-			if board[item] != '.' and board[item] != '_':
-				available_moves = possible_moves[item] if is_selected and item in possible_moves else []
-				self.draw_piece(window, color, item[0], item[1], is_possible, is_king, is_selected, available_moves)
+    def draw_pieces(self, window, board, possible_moves, selected):
+        # TODO: this always shows black on the bottom of the screen.
+        for item in board:
+            is_possible = (item[0], item[1]) in possible_moves
+            is_selected = True if selected == item else False
+            color = 'red' if board[item] == 'r' or board[item] == 'R' else 'black'
+            is_king = True if board[item] == 'R' or board[item] == 'B' else False
+            if board[item] != '.' and board[item] != '_':
+                available_moves = possible_moves[item] if is_selected and item in possible_moves else []
+                self.draw_piece(window, color, item[0], item[1], is_possible, is_king, is_selected, available_moves)
 
-	def draw_piece(self, window, piece_color, row, col, is_possible, is_king, is_selected, available_moves):
-		outline = red_outline if piece_color == 'red' else black_outline
-		color = red_color if piece_color == 'red' else black_color
-		# These numbers are hard coded, but the pieces render correctly for different sizes for me.
-		y_pos = row * 40 + 85
-		x_pos = col * 40 + 85
-		pg.draw.circle(window, outline, (x_pos, y_pos), 18, 18)
-		pg.draw.circle(window, color, (x_pos, y_pos), 15, 15)
-		if is_possible:
-			pygame.draw.circle(window, light_green, (x_pos, y_pos), 19, 1)
-		if is_selected:
-			pygame.draw.circle(window, gold_outline, (x_pos, y_pos), 19, 1)
-			for move in available_moves:
-				next_x = move['endRow'] * 40 + 85
-				next_y = move['endColumn'] * 40 + 85
-				pygame.draw.circle(window, gold_outline, (next_y, next_x), 19, 1)
-		if is_king:
-			crown = pygame.image.load("king.png").convert_alpha()
-			window.blit(crown, (x_pos - 27, y_pos - 17))
+    def draw_piece(self, window, piece_color, row, col, is_possible, is_king, is_selected, available_moves):
+        outline = red_outline if piece_color == 'red' else black_outline
+        color = red_color if piece_color == 'red' else black_color
+        # These numbers are hard coded, but the pieces render correctly for different sizes for me.
+        y_pos = row * 40 + 85
+        x_pos = col * 40 + 85
+        pg.draw.circle(window, outline, (x_pos, y_pos), 18, 18)
+        pg.draw.circle(window, color, (x_pos, y_pos), 15, 15)
+        if is_possible:
+            pygame.draw.circle(window, light_green, (x_pos, y_pos), 19, 1)
+        if is_selected:
+            pygame.draw.circle(window, gold_outline, (x_pos, y_pos), 19, 1)
+            for move in available_moves:
+                next_x = move['endRow'] * 40 + 85
+                next_y = move['endColumn'] * 40 + 85
+                pygame.draw.circle(window, gold_outline, (next_y, next_x), 19, 1)
+        if is_king:
+            crown = pygame.image.load("king.png").convert_alpha()
+            window.blit(crown, (x_pos - 27, y_pos - 17))
 
 
 class Page(object):
-	def __init__(self):
-		# create the background
-		wood = pg.image.load("wood.jpg")
-		self.background = pg.transform.scale(wood, SCREEN_START_SIZE)
+    def __init__(self):
+        # create the background
+        wood = pg.image.load("wood.jpg")
+        self.background = pg.transform.scale(wood, SCREEN_START_SIZE)
+        self.timeout = 45
+        self.message = ""
 
-	def settings_quit_btn(self, set_done, set_page):
-		if not isinstance(self, WinPage):
-			self.button("quit", 510, 425, 85, 20, tan_color, tan_highlight, lambda: set_done(True))
-			pg.draw.rect(self.image, brown_color, (510, 425, 85, 20), 2)
-		if not isinstance(self, Settings) and not isinstance(self, WinPage):
-			self.button("settings", 510, 20, 85, 20, tan_color, tan_highlight, lambda: set_page(Settings()))
-			pg.draw.rect(self.image, brown_color, (510, 20, 85, 20), 2)
 
-	def update(self, window: pg.Surface, screen_rect, scale, update_page, update_done, update_client, client):
-		self.screen_rect = screen_rect
-		self.scale = scale
-		self.image = window
-		self.image.blit(self.background, (0, 0))
+    def settings_quit_btn(self, set_done, set_page):
+        if not isinstance(self, WinPage):
+            self.button("quit", 510, 425, 85, 20, tan_color, tan_highlight, lambda: set_done(True))
+        if not isinstance(self, Settings) and not isinstance(self, WinPage):
+            self.button("settings", 510, 20, 85, 20, tan_color, tan_highlight, lambda: set_page(Settings()))
+        if not isinstance(self, Intro):
+            self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: set_page(Intro()))
 
-		self.load_background()
-		self.load_buttons(update_page, update_client, client)
-		self.settings_quit_btn(update_done, update_page)
+    def update(self, window: pg.Surface, screen_rect, scale, update_page, update_done, update_client, client):
+        self.screen_rect = screen_rect
+        self.scale = scale
+        self.image = window
+        self.image.blit(self.background, (0, 0))
 
-	def load_background(self):
-		pass
+        self.load_background()
+        self.load_buttons(update_page, update_client, client)
+        self.settings_quit_btn(update_done, update_page)
 
-	def load_buttons(self, update_page=None, update_client=None, client=None):
-		pass
+    def show_message(self, client, messagex = 100, messagey=370, acceptx = 210, accepty = 400):
+        self.timeout -= 1
 
-	def handle_event(self, event, set_page, client):
-		pass
+        if client:
+            if self.message != client.game_message:
+                self.message = client.game_message
+                self.timeout = 45
 
-	def get_text_input(self, events, client):
-		pass
+            if client.pending_challenge and client.pending_challenge.challenge_to == client.id:
+                self.button("Accept", acceptx, accepty, 75, 20, tan_color, tan_highlight,
+                            lambda: client.respond_to_challenge(True))
+                self.button("Decline", acceptx + 115, accepty, 75, 20, tan_color, tan_highlight,
+                            lambda: client.respond_to_challenge(False))
+            if self.timeout == 0:
+                client.game_message = ""
+                client.pending_challenge = None
 
-	# https://pythonprogramming.net/pygame-button-function/?completed=/placing-text-pygame-buttons/
-	def button(self, msg, top_left_x_coordinate, top_left_y_coordinate, width, height, inactive_color, active_color,
-			   onClick=None):
-		# TODO: some of the button rectangles are smaller than the words.
-		cur = pg.mouse.get_pos()
-		click = pg.mouse.get_pressed()
-		image_x = self.screen_rect.center[0] - (SCREEN_START_SIZE[0] * self.scale) / 2
-		image_y = self.screen_rect.center[1] - (SCREEN_START_SIZE[1] * self.scale) / 2
-		if (top_left_x_coordinate + width) * self.scale + image_x > cur[
-			0] > top_left_x_coordinate * self.scale + image_x and \
-							(top_left_y_coordinate + height) * self.scale + image_y > cur[
-					1] > top_left_y_coordinate * self.scale + image_y:
-			if onClick is not None and msg != "home":
-				render_centered_text_with_background(28, msg, black_color, top_left_x_coordinate, top_left_y_coordinate,
-													 width, height,
-													 self.image, active_color)
-			if click[0] == 1 and onClick is not None:
-				onClick()
-		else:
-			if onClick is not None and msg != "home":
-				render_centered_text_with_background(28, msg, black_color, top_left_x_coordinate, top_left_y_coordinate,
-													 width, height,
-													 self.image, inactive_color)
+        if self.timeout == 0:
+            self.message = ""
+            self.timeout = 45
+        if self.timeout:
+            render_centered_text(30, self.message, black_color, messagex, messagey, 400, 20, self.image)
+
+
+    def load_background(self):
+        pass
+
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        pass
+
+    def handle_event(self, event, set_page, client):
+        pass
+
+    def get_text_input(self, events, client):
+        pass
+
+    # https://pythonprogramming.net/pygame-button-function/?completed=/placing-text-pygame-buttons/
+    def button(self, msg, top_left_x_coordinate, top_left_y_coordinate, width, height, inactive_color, active_color,
+               onClick=None):
+        # TODO: some of the button rectangles are smaller than the words.
+        cur = pg.mouse.get_pos()
+        click = pg.mouse.get_pressed()
+        image_x = self.screen_rect.center[0] - (SCREEN_START_SIZE[0] * self.scale) / 2
+        image_y = self.screen_rect.center[1] - (SCREEN_START_SIZE[1] * self.scale) / 2
+        if (top_left_x_coordinate + width) * self.scale + image_x > cur[
+            0] > top_left_x_coordinate * self.scale + image_x and \
+                            (top_left_y_coordinate + height) * self.scale + image_y > cur[
+                    1] > top_left_y_coordinate * self.scale + image_y:
+            if onClick is not None and msg != "home":
+                render_centered_text_with_background(28, msg, black_color, top_left_x_coordinate, top_left_y_coordinate,
+                                                     width, height,
+                                                     self.image, active_color)
+            if click[0] == 1 and onClick is not None:
+                onClick()
+        else:
+            if onClick is not None and msg != "home":
+                render_centered_text_with_background(28, msg, black_color, top_left_x_coordinate, top_left_y_coordinate,
+                                                     width, height,
+                                                     self.image, inactive_color)
 
 
 class Intro(Page):
-	def load_background(self):
-		draw_black_circle(450, 150, intro_circle_radius, intro_outline_radius, self.image)
-		draw_red_circle(350, 150, intro_circle_radius, intro_outline_radius, self.image)
-		draw_black_circle(250, 150, intro_circle_radius, intro_outline_radius, self.image)
-		draw_red_circle(150, 150, intro_circle_radius, intro_outline_radius, self.image)
-		render_centered_text(100, "Checkers", gold_color, 265, 110, intro_circle_radius, intro_outline_radius,
-							 self.image)
+    def load_background(self):
+        draw_black_circle(450, 150, intro_circle_radius, intro_outline_radius, self.image)
+        draw_red_circle(350, 150, intro_circle_radius, intro_outline_radius, self.image)
+        draw_black_circle(250, 150, intro_circle_radius, intro_outline_radius, self.image)
+        draw_red_circle(150, 150, intro_circle_radius, intro_outline_radius, self.image)
+        render_centered_text(100, "Checkers", gold_color, 265, 110, intro_circle_radius, intro_outline_radius,
+                             self.image)
 
-	def load_buttons(self, update_page=None, update_client=None, client=None):
-		self.button("One Player", 125, 300, 150, 34, tan_color, tan_highlight, lambda: update_page(OnePlayerOptions()))
-		self.button("Two Player", 325, 300, 150, 34, tan_color, tan_highlight, lambda: update_page(TwoPlayerOptions()))
-
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        self.button("One Player", 125, 300, 150, 34, tan_color, tan_highlight, lambda: update_page(OnePlayerOptions()))
+        self.button("Two Player", 325, 300, 150, 34, tan_color, tan_highlight, lambda: update_page(TwoPlayerOptions()))
+        self.show_message(client)
 
 
 class Settings(Page):
-	def load_background(self):
-		# TODO: Update these numbers if necessary
-		render_centered_text_with_background(70, "Settings", black_color, 100, 25, 400, 80, self.image, tan_color)
-		self.image.blit(render_text(25, "Preferred color", black_color)[0], (245, 320))
+    def load_background(self):
+        render_centered_text_with_background(70, "Settings", black_color, 100, 25, 400, 80, self.image, tan_color)
+        self.image.blit(render_text(25, "Preferred color", black_color)[0], (245, 220))
 
-	def load_buttons(self, update_page=None, update_client=None, client=None):
-		draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
-		draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
-		self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: update_page(Intro()))		
-		self.button("List Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client())
-		self.button("2 player page", 350, 185, 150, 30, tan_color, tan_highlight,
-						lambda: update_page(TwoPlayerOptions()))
-		if (client):
-			self.button("Don't play online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client(None))
-		else:
-			self.button("List Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client(startClient()))
-		pg.draw.rect(self.image, tan_color, (100, 150, 150, 30))
-		pg.draw.rect(self.image, brown_color, (100, 150, 150, 30), 2)
-		self.image.blit(render_text(20, "Update Username", black_color)[0], (120, 160))
- 
-    
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        draw_red_circle(265, 285, settings_circle_radius, settings_outline_radius, self.image)
+        draw_black_circle(335, 285, settings_circle_radius, settings_outline_radius, self.image)
+        self.button("List Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client(startClient()))
+        if (client):
+            self.button("Don't play online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client(None))
+        else:
+            self.button("List Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client(startClient()))
+        render_centered_text_with_background(20, "Update Username", black_color, 100, 150, 150, 30, self.image, tan_color)
+        self.show_message(client)
+
+
 class red_selection(Page):
-	def load_background(self):
-		# TODO: update these numbers -- looks good on the Mac.
-		render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
-		self.image.blit(render_text(25, "Select color", black_color)[0], (255, 320))
-		select_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
+    def load_background(self):
+        # TODO: update these numbers -- looks good on the Mac.
+        render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
+        self.image.blit(render_text(25, "Select color", black_color)[0], (255, 320))
+        select_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
 
-	def load_buttons(self, update_page=None, update_client=None, client=None):
-		self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(red_selection()))
-		self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(black_selection()))
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(red_selection()))
+        self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(black_selection()))
 
-		draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
-		draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
-		self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
-		self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
-		self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
-		self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: update_page(Intro()))	
+        draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
+        draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
+        self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
+        self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
+        self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
 
 
 class black_selection(Page):
-	def load_background(self):
-		# TODO: update these numbers -- looks good on the Mac.
-		render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
-		self.image.blit(render_text(25, "Select color", black_color)[0], (255, 320))
-		select_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
+    def load_background(self):
+        # TODO: update these numbers -- looks good on the Mac.
+        render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
+        self.image.blit(render_text(25, "Select color", black_color)[0], (255, 320))
+        select_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
 
-	def load_buttons(self, update_page=None, update_client=None, client=None):
-		self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(red_selection()))
-		self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(black_selection()))
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(red_selection()))
+        self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(black_selection()))
 
-		draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
-		draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
-		self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
-		self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
-		self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
-		self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: update_page(Intro()))	
-
+        draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
+        draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
+        self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
+        self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
+        self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
 
 
 class OnePlayerOptions(Page):
-	def load_background(self):
-		# TODO: update these numbers -- looks good on the Mac.
-		render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
-		self.image.blit(render_text(25, "Select color", black_color)[0], (255, 320))
+    def load_background(self):
+        # TODO: update these numbers -- looks good on the Mac.
+        render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
+        self.image.blit(render_text(25, "Select color", black_color)[0], (255, 320))
 
-
-
-	def load_buttons(self, update_page=None, update_client=None, client=None):
-		self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(red_selection()))
-		self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(black_selection()))
-		draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
-		draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
-		self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
-		self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
-		self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
-		self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: update_page(Intro()))	
-
+    def load_buttons(self, update_page=None, update_client=None, client=None):
+        self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(red_selection()))
+        self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(black_selection()))
+        draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
+        draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
+        self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
+        self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
+        self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
 
 
 class TwoPlayerOptions(Page):
@@ -203,7 +218,6 @@ class TwoPlayerOptions(Page):
         Page.__init__(self)
         self.scroll = 0
         self.message = message
-        self.timeout = 45
 
     def handle_event(self, event, set_page, client):
         if event.type == pg.MOUSEBUTTONDOWN:
@@ -217,12 +231,9 @@ class TwoPlayerOptions(Page):
 
     def load_buttons(self, update_page=None, update_client=None, client=None):
         self.button("Local Game", 100, 150, 180, 30, tan_color, tan_highlight, lambda: update_page(GamePage(False)))
-        self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: update_page(Intro()))	
         if not client:
             self.button("Play Online", 100, 200, 180, 30, tan_color, tan_highlight, lambda: update_client(startClient()))
         else:
-            if client.has_current_game:
-                update_page(GamePage(False, networked_game = True))
             self.button("Don't play online", 100, 200, 180, 30, tan_color, tan_highlight, lambda: update_client(None))
             self.show_available_players(client)
         self.show_message(client)
@@ -248,29 +259,6 @@ class TwoPlayerOptions(Page):
                                        30,
                                        5,
                                        lambda player: client.send_challenge(player))
-
-    def show_message(self, client):
-        self.timeout -= 1
-
-        if client:
-            if self.message != client.game_message:
-                self.message = client.game_message
-                self.timeout = 45
-
-            if client.pending_challenge and client.pending_challenge.challenge_to == client.id:
-                self.button("Accept", 210, 400, 75, 20, tan_color, tan_highlight,
-                            lambda: client.respond_to_challenge(True))
-                self.button("Decline", 315, 400, 75, 20, tan_color, tan_highlight,
-                            lambda: client.respond_to_challenge(False))
-            if self.timeout == 0:
-                client.game_message = ""
-                client.pending_challenge = None
-
-        if self.timeout == 0:
-            self.message = ""
-            self.timeout = 45
-        if self.timeout:
-            render_centered_text(30, self.message, black_color, 100, 370, 400, 20, self.image)
 
 
     def __del__(self):
@@ -316,8 +304,8 @@ class GamePage(Page):
                     self.textinput.clear_text()
 
     def load_buttons(self, update_page=None, update_client=None, client=None):
-        if self.networked_game and not client.has_current_game:
-            update_page(TwoPlayerOptions())
+        if self.networked_game and not (client and client.has_current_game):
+            update_page(TwoPlayerOptions(), "There is a problem with the server.")
             return
         if self.AIgame and self.gameState.is_game_over(self.gameState.get_all_legal_moves())[0]:
             is_win = self.check_win(self.gameState.get_all_legal_moves())
@@ -438,62 +426,53 @@ class GamePage(Page):
                 update_page(WinPage(is_win))
 
 
-
-# TODO: add a 'replay' button?
 class WinPage(Page):
-	def __init__(self, winner):
-		Page.__init__(self)
-		self.winner = winner
+    def __init__(self, winner):
+        Page.__init__(self)
+        self.winner = winner
 
-	def load_background(self):
-		if self.winner == 2:
-			winnerColor1 = gold_outline
-			winnerColor2 = gold_color
-		elif self.winner == 0:
-			winnerColor1 = red_outline
-			winnerColor2 = red_color
-		else:
-			winnerColor1 = black_outline
-			winnerColor2 = black_color
-		draw_circle(50, 50, winnerColor2, winnerColor1, 40, 45, self.image)
-		draw_circle(550, 50, winnerColor2, winnerColor1, 40, 45, self.image)
-		draw_circle(50, 400, winnerColor2, winnerColor1, 40, 45, self.image)
-		draw_circle(550, 400, winnerColor2, winnerColor1, 40, 45, self.image)
-		self.image.blit(render_text(25, "Play", gold_color)[0], (535, 385))
-		self.image.blit(render_text(25, "Again", gold_color)[0], (530, 405))
+    def load_background(self):
+        if self.winner == 2:
+            winnerColor1 = gold_outline
+            winnerColor2 = gold_color
+        elif self.winner == 0:
+            winnerColor1 = red_outline
+            winnerColor2 = red_color
+        else:
+            winnerColor1 = black_outline
+            winnerColor2 = black_color
 
-		draw_circle(150, 400, gold_color, gold_outline, 25, 30, self.image)
-		draw_circle(225, 400, gold_color, gold_outline, 25, 30, self.image)
-		draw_circle(300, 400, gold_color, gold_outline, 25, 30, self.image)
-		draw_circle(375, 400, gold_color, gold_outline, 25, 30, self.image)
-		draw_circle(450, 400, gold_color, gold_outline, 25, 30, self.image)
+        for h in [50, 400]:
+            draw_circle(50, h, winnerColor2, winnerColor1, 40, 45, self.image)
+            draw_circle(550, h, winnerColor2, winnerColor1, 40, 45, self.image)
 
-		draw_circle(190, 325, gold_color, gold_outline, 25, 30, self.image)
-		draw_circle(265, 325, gold_color, gold_outline, 25, 30, self.image)
-		draw_circle(340, 325, gold_color, gold_outline, 25, 30, self.image)
-		draw_circle(415, 325, gold_color, gold_outline, 25, 30, self.image)
+        # TODO: this isn't a button. If we turn it into a button, where should it lead to?
+        # self.image.blit(render_text(25, "Play", gold_color)[0], (535, 385))
+        # self.image.blit(render_text(25, "Again", gold_color)[0], (530, 405))
 
-		draw_circle(225, 250, gold_color, gold_outline, 25, 30, self.image)
-		draw_circle(300, 250, gold_color, gold_outline, 25, 30, self.image)
-		draw_circle(375, 250, gold_color, gold_outline, 25, 30, self.image)
+        for i in range(5):
+            draw_circle(150 + 75 * i, 400, gold_color, gold_outline, 25, 30, self.image)
 
-		draw_circle(265, 175, gold_color, gold_outline, 25, 30, self.image)
-		draw_circle(340, 175, gold_color, gold_outline, 25, 30, self.image)
+        for j in range(4):
+            draw_circle(190 + 75 * j, 325, gold_color, gold_outline, 25, 30, self.image)
 
-		pygame.draw.circle(self.image, gold_outline, (300, 100), 30, 30)
-		pygame.draw.circle(self.image, winnerColor2, (300, 100), 25, 25)
+        for k in range(3):
+            draw_circle(225 + 75 * k, 250, gold_color, gold_outline, 25, 30, self.image)
 
-		if self.winner == 2:
-			text = "It's a Draw!"
-		else:
-			if self.winner == 0:
-				text = "Red Wins!"
-			else:
-				text = "Black Wins!"
-		self.image.blit(render_text(80, text, gold_color)[0], (165, 5))
+        for l in range(2):
+            draw_circle(265 + 75 * l, 175, gold_color, gold_outline, 25, 30, self.image)
 
-	def load_buttons(self, update_page=None, update_client=None, client=None):
-		self.button("home", 475, 350, 150, 150, tan_color, tan_highlight, lambda: update_page(Intro()))
+        pygame.draw.circle(self.image, gold_outline, (300, 100), 30, 30)
+        pygame.draw.circle(self.image, winnerColor2, (300, 100), 25, 25)
+
+        if self.winner == 2:
+            text = "It's a Draw!"
+        else:
+            if self.winner == 0:
+                text = "Red Wins!"
+            else:
+                text = "Black Wins!"
+        self.image.blit(render_text(80, text, gold_color)[0], (165, 5))
 
 
 class ScreenControl(object):
@@ -540,22 +519,26 @@ class ScreenControl(object):
         else:
             self.screen.blit(self.image, (0, 0))
 
+
     def main(self):
         while not self.done:
             if self.client and self.client.error:
-                print("in main")
                 self.client = None
-                if isinstance(self.page, GamePage) and self.client.has_current_game:
-                    self.page = TwoPlayerOptions("There was a problem connecting to the server.")
-                elif isinstance(self.page, TwoPlayerOptions):
-                    self.page = TwoPlayerOptions("There was a problem connecting to the server.")
+                self.page.message = "There was a problem connecting to the server."
+            if self.client and self.client.has_current_game and not isinstance(self.page, GamePage):
+                    self.set_page(GamePage(False, networked_game=True))
             self.screen_event()
             self.screen_update()
             pg.display.update()
             self.clock.tick(self.fps)
 
-    def set_page(self, page):
+    def set_page(self, page, message = ""):
+        if isinstance(self.page, GamePage) and self.client and self.client.has_current_game:
+            self.client.resign_game()
+            self.client.has_current_game = False
         self.page = page
+        if message:
+            self.page.message = message
 
     def set_client(self, client):
         print('clicked')
@@ -565,9 +548,8 @@ class ScreenControl(object):
         self.done = done
 
 
-
 if __name__ == "__main__":
-	run_it = ScreenControl()
-	run_it.main()
-	pg.quit()
-	sys.exit()
+    run_it = ScreenControl()
+    run_it.main()
+    pg.quit()
+    sys.exit()

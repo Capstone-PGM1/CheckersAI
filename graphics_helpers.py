@@ -51,7 +51,6 @@ def draw_circle(x, y, color, outline_color, circle_radius, outline_radius, windo
 
 def render_text(font_size, message, color):
     scale = 1 if is_mac else 0.8
-    # myfont = pg.font.SysFont('Helvetica', int(font_size * scale), not is_mac)
     # Copyright (c) 2010-2013 by tyPoland Lukasz Dziedzic with Reserved Font Name "Carlito".
     myfont = pg.font.Font("Carlito-BoldItalic.ttf", int(font_size * scale))
     textsurface = myfont.render(message, False, color)
@@ -106,7 +105,7 @@ def load_chatbox(window, messages, scroll, textinput):
     return new_scroll
 
 
-# Got wrap_text directly from https://github.com/ColdrickSotK/yamlui/blob/master/yamlui/util.py#L82-L143
+# Modified wrap_text from https://github.com/ColdrickSotK/yamlui/blob/master/yamlui/util.py#L82-L143
 def wrap_text(text, num_chars):
     """Wrap text to fit inside a given width when rendered.
     :param text: The text to be wrapped.
@@ -128,7 +127,6 @@ def wrap_text(text, num_chars):
         while start + 1 < len(line):
             # Get the next potential splitting point
             next = line.index(' ', start + 1)
-            # if font.size(line[:next])[0] <= width:
             if next <= num_chars:
                 start = next
             else:

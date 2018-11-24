@@ -44,6 +44,9 @@ class ClientChannel(Channel):
     def Network_disconnect(self):
         self.Close()
 
+    def Network_endGame(self, data):
+        self._server.deleteGame(self._server.playerIdToRoom[data['id']], "{} has left the game.".format(data['id']))
+
 class CheckersServer(Server):
     channelClass = ClientChannel
 
