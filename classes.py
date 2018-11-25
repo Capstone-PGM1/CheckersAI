@@ -273,7 +273,6 @@ class GameState(object):
             moving_piece = self.board[start_row][start_column]
             self.board[legal_move.endRow][legal_move.endColumn] = moving_piece.upper() if\
                 self.is_king_condition(start_row, start_column, legal_move.endRow) else moving_piece
-            self.board[start_row][start_column] = 'x'
             if abs(start_row - legal_move.moves[0].toRow) == 2:
                 self.emptyMoves = 0
                 for move in legal_move.moves:
@@ -283,6 +282,7 @@ class GameState(object):
                 self.emptyMoves = 0
             else:
                 self.emptyMoves = self.emptyMoves + 1
+            self.board[start_row][start_column] = 'x'
         else:
             print("BIG ERROR: legal_move doesn't have any moves in it")
 
@@ -395,8 +395,8 @@ class GameState(object):
     # if several moves has same value, use random number to select one of those
     def get_ai_move(self, depth) -> LegalMove:
         cur_val, move = self.minimax_alphabeta(depth, -sys.maxsize - 1, sys.maxsize, False)
-        print("Moving to row " + str(move.endRow) + " column " + str(move.endColumn) + " from row " +
-              str(move.moves[0].fromRow) + " column " + str(move.moves[0].fromColumn))
+        # print("Moving to row " + str(move.endRow) + " column " + str(move.endColumn) + " from row " +
+        #       str(move.moves[0].fromRow) + " column " + str(move.moves[0].fromColumn))
         return move
 
     # calculate value of state using minimax  with alpha-beta pruning

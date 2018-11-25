@@ -1,4 +1,5 @@
 from gamestate import *
+from qlearning import *
 
 
 # def make_empty_board():
@@ -331,4 +332,32 @@ from gamestate import *
 # print(vat)
 # print(ind)
 
-run_game_state(GameState())
+#run_game_state(GameState())
+
+np.random.seed()
+q_table = np.load('80000.npy').item()
+red_player = RED
+for i in range(20000):
+    print(i)
+    run_training_game(GameState(), red_player, q_table, 1)
+    red_player = other_player(red_player)
+np.save("100000", q_table)
+
+# q_table = np.load('10000_3.npy').item()
+# red_player = RED
+# win = 0
+# loose = 0
+# draw = 0
+# for i in range(1000):
+#     print(i)
+#     result = run_checking_game(GameState(), red_player, q_table, 1)
+#     if result > 0:
+#         win = win + 1
+#     elif result == 0:
+#         draw = draw + 1
+#     else:
+#         loose = loose + 1
+#     red_player = other_player(red_player)
+# print("WIN " + str(win))
+# print("LOOSE " + str(loose))
+# print("DRAW " + str(draw))
