@@ -335,29 +335,45 @@ from qlearning import *
 #run_game_state(GameState())
 
 np.random.seed()
-q_table = np.load('80000.npy').item()
-red_player = RED
-for i in range(20000):
-    print(i)
-    run_training_game(GameState(), red_player, q_table, 1)
-    red_player = other_player(red_player)
-np.save("100000", q_table)
-
-# q_table = np.load('10000_3.npy').item()
-# red_player = RED
 # win = 0
-# loose = 0
+# lose = 0
 # draw = 0
-# for i in range(1000):
-#     print(i)
-#     result = run_checking_game(GameState(), red_player, q_table, 1)
+# q_table = np.load('99999_exp3.npy').item()
+# red_player = RED
+# probability = 1
+# for i in range(400000):
+#     result = run_training_game(GameState(), red_player, q_table, 1, probability)
 #     if result > 0:
 #         win = win + 1
 #     elif result == 0:
 #         draw = draw + 1
 #     else:
-#         loose = loose + 1
+#         lose = lose + 1
 #     red_player = other_player(red_player)
-# print("WIN " + str(win))
-# print("LOOSE " + str(loose))
-# print("DRAW " + str(draw))
+#     if i != 0 and (i % 50000) == 0:
+#         np.save(str(i) + "_exp3", q_table)
+#         print(str(i) + " games: win " + str(win) + " lose " + str(lose) + " draw " + str(draw))
+#         win = 0
+#         lose = 0
+#         draw = 0
+#         probability = probability - 0.1
+
+
+q_table = np.load('99999_exp4.npy').item()
+red_player = RED
+win = 0
+loose = 0
+draw = 0
+for i in range(10000):
+    print(i)
+    result = run_checking_game(GameState(), red_player, q_table, 1)
+    if result > 0:
+        win = win + 1
+    elif result == 0:
+        draw = draw + 1
+    else:
+        loose = loose + 1
+    red_player = other_player(red_player)
+print("WIN " + str(win))
+print("LOOSE " + str(loose))
+print("DRAW " + str(draw))

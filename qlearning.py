@@ -2,8 +2,8 @@ from classes import *
 import numpy as np
 
 ALPHA = 0.1
-GAMMA = 0.5
-PROBABILITY = 0.5
+GAMMA = 0.9
+# PROBABILITY = 0.9
 
 #     # 0 player_kings: int
 #     # 1 other_player_kings: int
@@ -76,7 +76,7 @@ def get_new_q_val(reward, max_q):
     return reward + GAMMA * max_q
 
 
-def run_training_game(game: GameState, q_player: int, q_table: dict, mm_depth: int):
+def run_training_game(game: GameState, q_player: int, q_table: dict, mm_depth: int, rand_prob):
     moves = game.get_all_legal_moves()
     while not game.is_game_over(moves)[0]:
         from_state = get_state_from_board(game, q_player)
@@ -87,7 +87,7 @@ def run_training_game(game: GameState, q_player: int, q_table: dict, mm_depth: i
             move = moves[0]  # sometimes there is just 1 jump available
         else:
             if game.activePlayer == q_player:
-                is_random = np.random.choice([True, False], p=[1.0 - PROBABILITY, PROBABILITY])
+                is_random = np.random.choice([True, False], p=[rand_prob, 1 - rand_prob])
                 if is_random:
                     move = np.random.choice(moves)
                 else:  # finding move with biggest q val so far
@@ -121,18 +121,22 @@ def run_training_game(game: GameState, q_player: int, q_table: dict, mm_depth: i
         game.switch_player()
         moves = game.get_all_legal_moves()
     if game.is_draw():
-        print("DRAW")
         reward = sys.maxsize / 2
     else:
         if game.is_win(moves) == q_player:
             reward = sys.maxsize
-            print("WIN")
         else:
             reward = -sys.maxsize - 1
-            print("LOST")
 
     q_table[from_state].update({to_state: update_q_value(q_table[from_state].get(to_state),
                                                          get_new_q_val(reward, q_table[from_state].get(to_state)))})
+    if game.is_draw():
+        return 0
+    else:
+        if game.is_win(moves) == q_player:
+            return 1
+        else:
+            return -1
 
 
 def run_checking_game(game: GameState, q_player: int, q_table: dict, mm_depth: int):
