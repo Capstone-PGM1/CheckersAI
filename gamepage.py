@@ -7,6 +7,12 @@ from graphics_helpers import *
 from client import *
 from pygame_textinput import *
 from classes import *
+import os.path
+from random_usernames import *
+import random
+from datetime import datetime
+
+settings_file_name = "lyra_checkers_settings.txt"
 
 class Pieces(object):
     def draw_pieces(self, window, board, possible_moves, selected):
@@ -48,7 +54,10 @@ class Page(object):
         self.background = pg.transform.scale(wood, SCREEN_START_SIZE)
         self.timeout = 45
         self.message = ""
-
+        self.screen_rect = None
+        self.scale = None
+        self.image = None
+        self.user_info = None
 
     def settings_quit_btn(self, set_done, set_page):
         if not isinstance(self, WinPage):
@@ -58,15 +67,23 @@ class Page(object):
         if not isinstance(self, Intro):
             self.button("Home", 10, 10, 60, 35, tan_color, tan_highlight, lambda: set_page(Intro()))
 
-    def update(self, window: pg.Surface, screen_rect, scale, update_page, update_done, update_client, client):
+    def update(self, window: pg.Surface, screen_rect, scale, update_page, update_done, update_client, client, user_info):
         self.screen_rect = screen_rect
         self.scale = scale
         self.image = window
+        self.user_info = user_info
+
         self.image.blit(self.background, (0, 0))
 
         self.load_background()
         self.load_buttons(update_page, update_client, client)
         self.settings_quit_btn(update_done, update_page)
+
+    def update_user_settings(self):
+        file = open(settings_file_name, 'w')
+        file_text = "\n".join(self.user_info)
+        file.write(file_text)
+        file.close()
 
     def show_message(self, client, messagex = 100, messagey=370, acceptx = 210, accepty = 400):
         self.timeout -= 1
@@ -106,7 +123,7 @@ class Page(object):
 
     # https://pythonprogramming.net/pygame-button-function/?completed=/placing-text-pygame-buttons/
     def button(self, msg, top_left_x_coordinate, top_left_y_coordinate, width, height, inactive_color, active_color,
-               onClick=None):
+               onClick=None, font_size = 28):
         # TODO: some of the button rectangles are smaller than the words.
         cur = pg.mouse.get_pos()
         click = pg.mouse.get_pressed()
@@ -117,14 +134,14 @@ class Page(object):
                             (top_left_y_coordinate + height) * self.scale + image_y > cur[
                     1] > top_left_y_coordinate * self.scale + image_y:
             if onClick is not None and msg != "home":
-                render_centered_text_with_background(28, msg, black_color, top_left_x_coordinate, top_left_y_coordinate,
+                render_centered_text_with_background(font_size, msg, black_color, top_left_x_coordinate, top_left_y_coordinate,
                                                      width, height,
                                                      self.image, active_color)
             if click[0] == 1 and onClick is not None:
                 onClick()
         else:
             if onClick is not None and msg != "home":
-                render_centered_text_with_background(28, msg, black_color, top_left_x_coordinate, top_left_y_coordinate,
+                render_centered_text_with_background(font_size, msg, black_color, top_left_x_coordinate, top_left_y_coordinate,
                                                      width, height,
                                                      self.image, inactive_color)
 
@@ -145,20 +162,46 @@ class Intro(Page):
 
 
 class Settings(Page):
+    def __init__(self):
+        Page.__init__(self)
+        self.textinput = TextInput(repeat_keys_initial_ms=40000, repeat_keys_interval_ms=40000)
+
     def load_background(self):
+        if len(self.textinput.get_text()) == 0 or len(self.textinput.get_text()) > 19:
+            self.textinput = TextInput(repeat_keys_initial_ms=40000, repeat_keys_interval_ms=40000, initial_string = self.user_info[0])
+
         render_centered_text_with_background(70, "Settings", black_color, 100, 25, 400, 80, self.image, tan_color)
-        self.image.blit(render_text(25, "Preferred color", black_color)[0], (245, 220))
+        render_centered_text_with_background(20, 'USERNAME', black_color, 100, 150, 150, 30, self.image, tan_color)
+        render_centered_text_with_background(20, self.textinput.get_text(), black_color, 100, 180, 150, 30, self.image, white_color)
+        render_centered_text_with_background(20, "STATISTICS", black_color, 100, 225, 150, 30, self.image, tan_color)
+        render_centered_text_with_background(20, "Wins: " + self.user_info[1], black_color, 100, 255, 150, 30, self.image, tan_color)
+        render_centered_text_with_background(20, "Losses: " + self.user_info[2], black_color, 100, 285, 150, 30, self.image, tan_color)
+        render_centered_text_with_background(20, "Draws: " + self.user_info[3], black_color, 100, 315, 150, 30, self.image, tan_color)
+
+        # TODO: color preferences on the settings page? Or just keep it on the one-player options page?
+        # self.image.blit(render_text(25, "Preferred color", black_color)[0], (245, 220))
+        # draw_red_circle(265, 285, settings_circle_radius, settings_outline_radius, self.image)
+        # draw_black_circle(335, 285, settings_circle_radius, settings_outline_radius, self.image)
 
     def load_buttons(self, update_page=None, update_client=None, client=None):
-        draw_red_circle(265, 285, settings_circle_radius, settings_outline_radius, self.image)
-        draw_black_circle(335, 285, settings_circle_radius, settings_outline_radius, self.image)
-        self.button("List Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client(startClient()))
         if (client):
-            self.button("Don't play online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client(None))
+            self.button("Don't play online", 350, 225, 150, 30, tan_color, tan_highlight, lambda: update_client(None))
         else:
-            self.button("List Online", 350, 150, 150, 30, tan_color, tan_highlight, lambda: update_client(startClient()))
-        render_centered_text_with_background(20, "Update Username", black_color, 100, 150, 150, 30, self.image, tan_color)
+            self.button("List Online", 350, 225, 150, 30, tan_color, tan_highlight, lambda: update_client(startClient(self.user_info[0])))
+        self.button("Save Username", 350, 150, 150, 30, tan_color, tan_highlight, lambda: self.update_username(), font_size=20)
+
         self.show_message(client)
+
+    def get_text_input(self, events, client):
+        if self.textinput.update(events):
+            self.update_username()
+
+    def update_username(self):
+        text = self.textinput.get_text()
+        if text:
+            self.user_info[0] = text
+            self.update_user_settings()
+            return self.user_info
 
 
 class red_selection(Page):
@@ -232,7 +275,7 @@ class TwoPlayerOptions(Page):
     def load_buttons(self, update_page=None, update_client=None, client=None):
         self.button("Local Game", 100, 150, 180, 30, tan_color, tan_highlight, lambda: update_page(GamePage(False)))
         if not client:
-            self.button("Play Online", 100, 200, 180, 30, tan_color, tan_highlight, lambda: update_client(startClient()))
+            self.button("Play Online", 100, 200, 180, 30, tan_color, tan_highlight, lambda: update_client(startClient(self.user_info[0])))
         else:
             self.button("Don't play online", 100, 200, 180, 30, tan_color, tan_highlight, lambda: update_client(None))
             self.show_available_players(client)
@@ -251,14 +294,15 @@ class TwoPlayerOptions(Page):
 
             else:
                 self.scroll = drawText(self.image,
-                                       client.other_players,
+                                       client.other_players_usernames,
                                        black_color,
                                        [xNum, yNum, 180, 150],
                                        self.scroll,
                                        self.button,
                                        30,
                                        5,
-                                       lambda player: client.send_challenge(player))
+                                       lambda playerId, playerName: client.send_challenge(playerId, playerName),
+                                       client.other_players)
 
 
     def __del__(self):
@@ -276,15 +320,15 @@ class GamePage(Page):
         self.possible_moves = []
         self.AIgame = ai_game
         self.scroll = 0
-        self.count = 0
         # Weird variables -- basically it prevents the game from reading the same key being pressed too many times.
         self.textinput = TextInput(repeat_keys_initial_ms=40000, repeat_keys_interval_ms=40000)
         self.networked_game = networked_game
         self.AIdepth = ai_depth
+        self.color = 0
 
     def handle_event(self, event, set_page, client):
         if (self.gameState.activePlayer == 0 or not self.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
-            self.handleGameClick(set_page, client)
+            self.handleGameClick(client)
             if client and client.has_current_game and event.button == 4:
                 self.scroll -= 1
             elif client and client.has_current_game and event.button == 5:
@@ -296,8 +340,6 @@ class GamePage(Page):
     def get_text_input(self, events, client):
         if client and client.has_current_game:
             if self.textinput.update(events):
-                print('pressed enter: {}'.format(self.count))
-                self.count += 1
                 text = self.textinput.get_text()
                 if text:
                     client.sendMessage(self.textinput.get_text())
@@ -307,19 +349,26 @@ class GamePage(Page):
         if self.networked_game and not (client and client.has_current_game):
             update_page(TwoPlayerOptions(), "There is a problem with the server.")
             return
-        if self.AIgame and self.gameState.is_game_over(self.gameState.get_all_legal_moves())[0]:
-            is_win = self.check_win(self.gameState.get_all_legal_moves())
-            if is_win != -1:
-                update_page(WinPage(is_win))
+        is_win = self.check_win(client)
+        if is_win != -1:
+            if self.networked_game or self.AIgame:
+                if is_win == self.color:
+                    self.user_info[1] = str(1 + int(self.user_info[1]))
+                elif is_win == 2:
+                    self.user_info[3] = str(1 + int(self.user_info[3]))
+                else:
+                    self.user_info[2] = str(1 + int(self.user_info[2]))
+                self.update_user_settings()
+            update_page(WinPage(is_win, self.get_winner_name(is_win, client)))
         elif client and client.has_current_game:
             self.scroll = load_chatbox(self.image, client.messages, self.scroll, self.textinput.get_text())
             self.board = client.board
             self.possible_moves = client.possible_moves if client.possible_moves else []
+            self.color = client.color
         else:
             self.board = self.gameState.get_board_for_network()
             self.possible_moves = self.gameState.send_possible_moves_for_network()
         self.piece.draw_pieces(self.image, self.board, self.possible_moves, self.initial_click)
-
 
     def load_background(self):
         lower = 65
@@ -393,13 +442,27 @@ class GamePage(Page):
             for y in range(385, 395, 10):
                 self.image.blit(Tiles.blackTile, (x, y))
 
-    def check_win(self, possible_moves):
-        is_win, winner = self.gameState.is_game_over(possible_moves)
-        if is_win:
-            return winner
-        return -1
+    def check_win(self, client):
+        if self.networked_game:
+            return client.winner
+        else:
+            possible_moves = self.gameState.get_all_legal_moves()
+            is_win, winner = self.gameState.is_game_over(possible_moves)
+            if is_win:
+                return winner
+            return -1
 
-    def handleGameClick(self, update_page, client):
+    def get_winner_name(self, is_win, client):
+        if self.networked_game:
+            return client.winner_name
+
+        win_color = "Red" if is_win == 0 else "Black"
+        if self.AIgame:
+            return self.user_info[0] if is_win == self.color else win_color
+        else:
+            return win_color
+
+    def handleGameClick(self, client):
         pos = pygame.mouse.get_pos()
         image_x = self.screen_rect.center[0] - (SCREEN_START_SIZE[0] * self.scale) / 2
         image_y = self.screen_rect.center[1] - (SCREEN_START_SIZE[1] * self.scale) / 2
@@ -420,16 +483,13 @@ class GamePage(Page):
 
         if (row, col) in self.possible_moves:
             self.initial_click = (row, col)
-        if made_move:
-            is_win = self.check_win(self.gameState.get_all_legal_moves())
-            if is_win != -1:
-                update_page(WinPage(is_win))
 
 
 class WinPage(Page):
-    def __init__(self, winner):
+    def __init__(self, winner, winner_name):
         Page.__init__(self)
         self.winner = winner
+        self.winner_name = winner_name
 
     def load_background(self):
         if self.winner == 2:
@@ -468,10 +528,7 @@ class WinPage(Page):
         if self.winner == 2:
             text = "It's a Draw!"
         else:
-            if self.winner == 0:
-                text = "Red Wins!"
-            else:
-                text = "Black Wins!"
+            text = self.winner_name + " Wins!"
         self.image.blit(render_text(80, text, gold_color)[0], (165, 5))
 
 
@@ -491,6 +548,7 @@ class ScreenControl(object):
         self.client = None
         self.page = Intro()
         self.scroll = 0
+        self.user_info = None
 
     def screen_event(self):
         events = pg.event.get()
@@ -509,7 +567,7 @@ class ScreenControl(object):
 
     def screen_update(self):
         self.page.update(self.image, self.screen_rect, self.scale, self.set_page, self.set_done, self.set_client,
-                         self.client)
+                         self.client, self.user_info)
         if self.screen_rect.size != SCREEN_START_SIZE:
             fit_to_rect = self.image_rect.fit(self.screen_rect)
             fit_to_rect.center = self.screen_rect.center
@@ -521,18 +579,37 @@ class ScreenControl(object):
 
 
     def main(self):
+        # Create a file if it doesn't already exist. If a corrupted file exists, replace it with a valid file.
+        valid_file = False
+        while valid_file == False:
+            if not os.path.exists(settings_file_name):
+                file = open(settings_file_name, 'x')
+                # username, wins, losses, draws.
+                username = usernames[random.randint(0, 88)]
+                file.write(username + "\n0\n0\n0")
+                file.close()
+            user_info_file = open(settings_file_name, 'r')
+            self.user_info = [x.rstrip() for x in user_info_file.readlines()]
+            user_info_file.close()
+            if len(self.user_info) == 4 and self.user_info[1].isdigit() and self.user_info[2].isdigit() and self.user_info[3].isdigit():
+                valid_file = True
+            else:
+                os.remove(settings_file_name)
+
         while not self.done:
             if self.client and self.client.error:
                 self.client = None
                 self.page.message = "There was a problem connecting to the server."
             if self.client and self.client.has_current_game and not isinstance(self.page, GamePage):
-                    self.set_page(GamePage(False, networked_game=True))
+                self.set_page(GamePage(False, networked_game=True))
             self.screen_event()
             self.screen_update()
             pg.display.update()
             self.clock.tick(self.fps)
 
     def set_page(self, page, message = ""):
+        if isinstance(page, WinPage) and self.client and self.client.has_current_game:
+            self.client.clear_game_info()
         if isinstance(self.page, GamePage) and self.client and self.client.has_current_game:
             self.client.resign_game()
             self.client.has_current_game = False
@@ -541,7 +618,6 @@ class ScreenControl(object):
             self.page.message = message
 
     def set_client(self, client):
-        print('clicked')
         self.client = client
 
     def set_done(self, done):
@@ -549,6 +625,7 @@ class ScreenControl(object):
 
 
 if __name__ == "__main__":
+    random.seed(datetime.now())
     run_it = ScreenControl()
     run_it.main()
     pg.quit()

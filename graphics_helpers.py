@@ -27,6 +27,7 @@ tan_color = (242, 221, 179)
 tan_highlight = (242, 235, 222)
 light_green = (83, 249, 88)
 brown_color = (91, 63, 27)
+white_color = (255, 255, 255)
 
 is_mac = os.name == 'java'
 
@@ -142,7 +143,7 @@ def wrap_text(text, num_chars):
 
 # modified text from https://www.reddit.com/r/pygame/comments/5lhp28/how_do_i_get_mouse_wheel_events/
 # draw some text into an area of a surface
-def drawText(surface, text, color, rectangle, scroll, button = None, height = None, num_lines = 8, onClickButton = None):
+def drawText(surface, text, color, rectangle, scroll, button = None, height = None, num_lines = 8, onClickButton = None, ids = None):
     y = rectangle[1]
     lineSpacing = 2
     myfont = pg.font.SysFont('Arial', 20)
@@ -158,7 +159,7 @@ def drawText(surface, text, color, rectangle, scroll, button = None, height = No
     end = max(scroll + len(text), num_lines)
     for i in range(begin, min(end, len(text))):
         if button:
-            button(text[i], rectangle[0], y, 180, 30, tan_color, tan_highlight, lambda : onClickButton(text[i]))
+            button(text[i], rectangle[0], y, 180, 30, tan_color, tan_highlight, lambda : onClickButton(ids[i], text[i]))
         else:
             image = myfont.render(text[i], True, color)
             surface.blit(image, (rectangle[0], y))

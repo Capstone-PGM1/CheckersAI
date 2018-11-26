@@ -4,7 +4,6 @@ from PodSixNet.Channel import Channel
 from gamestate import *
 
 from time import sleep
-import sys
 
 class RoomInfo:
     def __init__(self, player0, player1, game):
@@ -22,8 +21,9 @@ class ClientChannel(Channel):
 
     def Close(self):
         if self.id in self._server.playerIdToRoom:
-            self._server.deleteGame(self._server.playerIdToRoom[self.id], str(self.id) + " has left the game.")
+            self._server.deleteGame(self._server.playerIdToRoom[self.id], self._server.playerIdToUsername[self.id] + " has left the game.")
         self._server.playerIdToPlayerChannel.pop(self.id)
+        self._server.playerIdToUsername.pop(self.id)
         self._server.sendPlayers()
 
     def Network_getChallenge(self, data):
@@ -39,13 +39,17 @@ class ClientChannel(Channel):
         self._server.updateBoard(data['id'], data['move'])
 
     def Network_message(self, data):
-        self._server.sendToPlayersInGame(data['id'], {"action": 'message', "message": data['message'], "playerName": str(data['id'])})
+        self._server.sendToPlayersInGame(data['id'], {"action": 'message', "message": data['message'], "playerName": self._server.playerIdToUsername[data['id']]})
 
     def Network_disconnect(self):
         self.Close()
 
     def Network_endGame(self, data):
-        self._server.deleteGame(self._server.playerIdToRoom[data['id']], "{} has left the game.".format(data['id']))
+        self._server.deleteGame(self._server.playerIdToRoom[data['id']], "{} has left the game.".format(self._server.playerIdToUsername[data['id']]))
+
+    def Network_updateUsername(self, data):
+        self._server.playerIdToUsername[self.id] = data['username']
+        self._server.sendPlayers()
 
 class CheckersServer(Server):
     channelClass = ClientChannel
@@ -56,6 +60,7 @@ class CheckersServer(Server):
         self.playerIdToRoom = dict()
         self.counter = 0
         self.nextId = 0
+        self.playerIdToUsername = dict()
 
     def Connected(self, channel, addr):
         playerId = self.nextId
@@ -64,23 +69,23 @@ class CheckersServer(Server):
         channel.id = playerId
 
         channel.Send({"action": "receiveId", "id": playerId})
-        self.sendPlayers()
 
     # These methods have to do with connecting the game for many players.
     def sendPlayers(self):
         # send something to both players in the game.
         for playerId, channel in self.playerIdToPlayerChannel.items():
             if playerId not in self.playerIdToRoom:
-                x = list(map(lambda y: str(y), filter(lambda x: x not in self.playerIdToRoom, self.playerIdToPlayerChannel.keys())))
-                channel.Send({"action": "getPlayers", "players": x})
+                playerIds = list(map(lambda y: str(y), filter(lambda x: x not in self.playerIdToRoom, self.playerIdToPlayerChannel.keys())))
+                usernames = list(map(lambda id: self.playerIdToUsername[int(id)], playerIds))
+                channel.Send({"action": "getPlayers", "players": playerIds, "usernames": usernames})
 
     def sendChallenge(self, playerId, otherPlayerId):
         # make sure the other player is not already in a game and that the other player exists.
         if otherPlayerId not in self.playerIdToRoom and otherPlayerId in self.playerIdToPlayerChannel:
-            self.playerIdToPlayerChannel[otherPlayerId].Send({"action": "getChallenge", "otherPlayerId": playerId})
+            self.playerIdToPlayerChannel[otherPlayerId].Send({"action": "getChallenge", "otherPlayerId": playerId, "otherPlayerName": self.playerIdToUsername[playerId]})
 
     def rejectChallenge(self, playerId, otherPlayerId):
-        self.playerIdToPlayerChannel[otherPlayerId].Send({"action": "rejectChallenge", "playerId": playerId})
+        self.playerIdToPlayerChannel[otherPlayerId].Send({"action": "rejectChallenge", "playerName": self.playerIdToUsername[playerId]})
 
     # These methods have to do with playing the game
     def startGame(self, player0, player1):
@@ -97,17 +102,18 @@ class CheckersServer(Server):
 
         if room.game.activePlayer == 0:
             self.playerIdToPlayerChannel[room.player0].Send(
-                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "possibleMoves": room.game.send_possible_moves_for_network()})
+                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "possibleMoves": room.game.send_possible_moves_for_network(), "color": 0})
             self.playerIdToPlayerChannel[room.player1].Send(
-                {"action": "getPossibleMoves", "game": room.game.get_board_for_network()})
+                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "color": 1})
         else:
             self.playerIdToPlayerChannel[room.player1].Send(
-                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "possibleMoves": room.game.send_possible_moves_for_network()})
+                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "possibleMoves": room.game.send_possible_moves_for_network(), "color": 1})
             self.playerIdToPlayerChannel[room.player0].Send(
-                {"action": "getPossibleMoves", "game": room.game.get_board_for_network()})
+                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "color": 0})
 
     def deleteGame(self, game, message):
-        self.sendToPlayersInGame(game.player0, {"action": "closeGame", "playerName": "game", "message": message})
+        if message != "gameOver":
+            self.sendToPlayersInGame(game.player0, {"action": "closeGame", "playerName": "game", "message": message})
 
         self.playerIdToRoom.pop(game.player0)
         self.playerIdToRoom.pop(game.player1)
@@ -125,8 +131,10 @@ class CheckersServer(Server):
         # If the game is over, notify participants and delete the game.
         is_over, winner = room.game.is_game_over(room.game.get_all_legal_moves())
         if is_over:
-            message = "The game has ended in a draw." if winner == 2 else "Player " + str(winner) + " has won the game."
-            self.deleteGame(self.playerIdToRoom[player], message)
+            # message = "The game has ended in a draw." if winner == 2 else "Player " + str(winner) + " has won the game."
+            winner_name = self.playerIdToUsername[self.playerIdToRoom[player].player0] if winner == 0 else self.playerIdToUsername[self.playerIdToRoom[player].player1]
+            self.sendToPlayersInGame(player, {"action": "gameEnd", "winner": winner, "winner_name": winner_name})
+            self.deleteGame(self.playerIdToRoom[player], "gameOver")
         #     Otherwise, continue sending the board to the players.
         else:
             self.sendBoardToPlayers(player)
