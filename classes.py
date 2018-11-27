@@ -62,29 +62,30 @@ class GameState(object):
             string += "\n"
         return string
 
-    def send_possible_moves_for_network(self):
+    def send_possible_moves_for_network(self, color = 0):
         dct = dict()
         possible_moves = self.get_all_legal_moves()
         for row in range(8):
             for column in range(8):
                 moves = piece_possible_moves(row, column, possible_moves)
                 if len(moves) > 0:
-                    dct[(row, column)] = [{"endRow": x.endRow, "endColumn": x.endColumn, "piecesNumber": x.piecesNumber,
-                                           "moves": {(y.fromRow, y.fromColumn): (y.toRow, y.toColumn) for y in x.moves}} for x in moves]
+                    dct[(row if color else 7 - row, column if color else 7 - column)] = [{"endRow": x.endRow if color else 7 - x.endRow, "endColumn": x.endColumn if color else 7 - x.endColumn, "piecesNumber": x.piecesNumber,
+                                           "moves": {(y.fromRow if color else 7 - y.fromRow, y.fromColumn if color else 7 - y.fromColumn): (y.toRow if color else 7 - y.toRow, y.toColumn if color else 7 - y.toColumn) for y in x.moves}} for x in moves]
         return dct
 
-    def get_board_for_network(self):
+    def get_board_for_network(self, color = 0):
         dct = dict()
         for row in range(8):
             for column in range(8):
+                row_index = row if color else 7 - row
+                column_index = column if color else 7 - column
                 if self.board[row][column] == 'x':
                     if row % 2 == column % 2:
-                        # string += "x "
-                        dct[(row, column)] = "_"
+                        dct[(row_index, column_index)] = "_"
                     else:
-                        dct[(row, column)] = "."
+                        dct[(row_index, column_index)] = "."
                 else:
-                    dct[(row, column)] = self.board[row][column]
+                    dct[(row_index, column_index)] = self.board[row][column]
         return dct
 
     # Initializing to empty array doesn't work well in Python: https://docs.python-guide.org/writing/gotchas/
@@ -95,7 +96,7 @@ class GameState(object):
             for row in range(8):
                 temp_row = []
                 for column in range(8):
-                    if row % 2 == column % 2:
+                    if row % 2 != column % 2:
                         if row < 3:
                             temp_row.append('r')
                         elif row > 4:

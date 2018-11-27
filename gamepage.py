@@ -15,7 +15,7 @@ from datetime import datetime
 settings_file_name = "lyra_checkers_settings.txt"
 
 class Pieces(object):
-    def draw_pieces(self, window, board, possible_moves, selected):
+    def draw_pieces(self, window, board, possible_moves, selected, color):
         # TODO: this always shows black on the bottom of the screen.
         for item in board:
             is_possible = (item[0], item[1]) in possible_moves
@@ -162,7 +162,7 @@ class Intro(Page):
                              self.image)
 
     def load_buttons(self, update_page=None, update_client=None, client=None):
-        self.button("One Player", 125, 300, 150, 30, tan_color, tan_highlight, lambda: update_page(OnePlayerOptions()))
+        self.button("One Player", 125, 300, 150, 30, tan_color, tan_highlight, lambda: update_page(OnePlayerOptions(0)))
         self.button("Two Player", 325, 300, 150, 30, tan_color, tan_highlight, lambda: update_page(TwoPlayerOptions()))
         self.show_message(client)
 
@@ -185,11 +185,6 @@ class Settings(Page):
         render_centered_text_with_background(20, "Losses: " + self.user_info[2], black_color, 100, 285, 150, 30, self.image, tan_color)
         render_centered_text_with_background(20, "Draws: " + self.user_info[3], black_color, 100, 315, 150, 30, self.image, tan_color)
 
-        # TODO: color preferences on the settings page? Or just keep it on the one-player options page?
-        # self.image.blit(render_text(25, "Preferred color", black_color)[0], (245, 220))
-        # draw_red_circle(265, 285, settings_circle_radius, settings_outline_radius, self.image)
-        # draw_black_circle(335, 285, settings_circle_radius, settings_outline_radius, self.image)
-
     def load_buttons(self, update_page=None, update_client=None, client=None):
         if (client):
             self.button("Don't play online", 350, 225, 150, 30, tan_color, tan_highlight, lambda: update_client(None))
@@ -211,59 +206,29 @@ class Settings(Page):
             return self.user_info
 
 
-class red_selection(Page):
-    def load_background(self):
-        # TODO: update these numbers -- looks good on the Mac.
-        border(self.image)
-        render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
-        self.image.blit(render_text(25, "Select color", black_color)[0], (255, 320))
-        select_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
-
-    def load_buttons(self, update_page=None, update_client=None, client=None):
-        self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(red_selection()))
-        self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(black_selection()))
-
-        draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
-        draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
-        self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
-        self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
-        self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
-
-
-class black_selection(Page):
-    def load_background(self):
-        # TODO: update these numbers -- looks good on the Mac.
-        border(self.image)
-        render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
-        self.image.blit(render_text(25, "Select color", black_color)[0], (255, 320))
-        select_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
-
-    def load_buttons(self, update_page=None, update_client=None, client=None):
-        self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(red_selection()))
-        self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(black_selection()))
-
-        draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
-        draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
-        self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
-        self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
-        self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
-
-
 class OnePlayerOptions(Page):
+    def __init__(self, color):
+        Page.__init__(self)
+        self.color = color
+
     def load_background(self):
         # TODO: update these numbers -- looks good on the Mac.
         border(self.image)
         render_centered_text_with_background(70, "New Game", black_color, 100, 25, 400, 80, self.image, tan_color)
         self.image.blit(render_text(25, "Select color", black_color)[0], (255, 320))
+        if self.color == 1:
+            select_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
+        else:
+            select_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
 
     def load_buttons(self, update_page=None, update_client=None, client=None):
-        self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(red_selection()))
-        self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(black_selection()))
+        self.button("Red", 245, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(OnePlayerOptions(0)))
+        self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(OnePlayerOptions(1)))
         draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
         draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
-        self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1)))
-        self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3)))
-        self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5)))
+        self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1, color = self.color)))
+        self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3, color = self.color)))
+        self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5, color = self.color)))
 
 
 class TwoPlayerOptions(Page):
@@ -322,7 +287,7 @@ class TwoPlayerOptions(Page):
 
 
 class GamePage(Page):
-    def __init__(self, ai_game=False, ai_depth = 1, networked_game = False):
+    def __init__(self, ai_game=False, ai_depth = 1, networked_game = False, color = 0):
         Page.__init__(self)
         self.initial_click = None
         self.piece = Pieces()
@@ -335,16 +300,16 @@ class GamePage(Page):
         self.textinput = TextInput(repeat_keys_initial_ms=40000, repeat_keys_interval_ms=40000)
         self.networked_game = networked_game
         self.AIdepth = ai_depth
-        self.color = 0
+        self.color = color
 
     def handle_event(self, event, set_page, client):
-        if (self.gameState.activePlayer == 0 or not self.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
+        if (self.gameState.activePlayer == self.color or not self.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
             self.handleGameClick(client)
             if client and client.has_current_game and event.button == 4:
                 self.scroll -= 1
             elif client and client.has_current_game and event.button == 5:
                 self.scroll += 1
-        elif self.AIgame and self.gameState.activePlayer == 1 and not self.gameState.is_game_over(self.gameState.get_all_legal_moves())[0]:
+        elif self.AIgame and self.gameState.activePlayer != self.color and not self.gameState.is_game_over(self.gameState.get_all_legal_moves())[0]:
             self.gameState.update_game_state_with_move_helper(self.gameState.get_ai_move(self.AIdepth))
             self.gameState.switch_player()
 
@@ -377,65 +342,19 @@ class GamePage(Page):
             self.possible_moves = client.possible_moves if client.possible_moves else []
             self.color = client.color
         else:
-            self.board = self.gameState.get_board_for_network()
-            self.possible_moves = self.gameState.send_possible_moves_for_network()
-        self.piece.draw_pieces(self.image, self.board, self.possible_moves, self.initial_click)
+            self.board = self.gameState.get_board_for_network(self.color)
+            self.possible_moves = self.gameState.send_possible_moves_for_network(self.color)
+        self.piece.draw_pieces(self.image, self.board, self.possible_moves, self.initial_click, self.color)
 
     def load_background(self):
         border(self.image)
         lower = 65
-        upper = 105
 
         for i in range(8):
-            for x in range(lower, upper, tile_size):
-                for y in range(lower, upper, tile_size):
-                    self.image.blit(Tiles.greyTile, (x, y))
-                    pg.draw.rect(self.image, black_color, (x, y, tile_size, tile_size), 1)
-                lower += 40
-                upper += 40
-
-        lower1, upper1, lower2, upper2, = 145, 185, 65, 105
-        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 6)
-
-        lower1, upper1, lower2, upper2, = 225, 265, 65, 105
-        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 4)
-
-        lower1, upper1, lower2, upper2, = 305, 346, 65, 105
-        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 1)
-
-        lower1, upper1, lower2, upper2, = 65, 105, 145, 185
-        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 6)
-
-        lower1, upper1, lower2, upper2, = 65, 105, 225, 265
-        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 4)
-
-        lower1, upper1, lower2, upper2, = 65, 105, 305, 345
-        load_grey_tiles(self.image, lower1, upper1, lower2, upper2, 2)
-
-        # draw white tiles
-        lower1, upper1, lower2, upper2, = 105, 145, 65, 105
-        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 7)
-
-        lower1, upper1, lower2, upper2, = 185, 225, 65, 105
-        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 5)
-
-        lower1, upper1, lower2, upper2, = 265, 305, 65, 105
-        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 3)
-
-        lower1, upper1, lower2, upper2, = 345, 385, 65, 105
-        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 1)
-
-        lower1, upper1, lower2, upper2, = 65, 105, 105, 145
-        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 7)
-
-        lower1, upper1, lower2, upper2, = 65, 105, 185, 225
-        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 5)
-
-        lower1, upper1, lower2, upper2, = 65, 105, 265, 305
-        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 3)
-
-        lower1, upper1, lower2, upper2, = 65, 105, 345, 385
-        load_white_tiles(self.image, lower1, upper1, lower2, upper2, 1)
+            for j in range(8):
+                tile = Tiles.greyTile if (i + j) % 2 else Tiles.whiteTile
+                self.image.blit(tile, (lower + i * tile_size, lower + j * tile_size))
+                pg.draw.rect(self.image, black_color, (lower + i * tile_size, lower + j * tile_size, tile_size, tile_size), 1)
 
         # game border
         for x in range(55, 65, 10):
@@ -486,11 +405,17 @@ class GamePage(Page):
         if self.initial_click and self.initial_click in self.possible_moves:
             for possibleMove in self.possible_moves[self.initial_click]:
                 if row == possibleMove['endRow'] and col == possibleMove['endColumn']:
-                    print("moved from " + str(self.initial_click) + " to (" + str(row) + ", " + str(col) + ")")
                     made_move = True
-                    game.update_game_state_with_move(self.initial_click[0], self.initial_click[1], row, col)
+                    startRow = self.initial_click[0]
+                    startCol = self.initial_click[1]
+                    if not self.color:
+                      col = 7 - col
+                      row = 7 - row
+                      startRow = 7 - startRow
+                      startCol = 7 - startCol
+
+                    game.update_game_state_with_move(startRow, startCol, row, col)
             if not made_move:
-                print("cannot move from " + str(self.initial_click) + " to (" + str(row) + ", " + str(col) + ")")
                 self.initial_click = None
 
         if (row, col) in self.possible_moves:

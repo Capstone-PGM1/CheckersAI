@@ -102,14 +102,14 @@ class CheckersServer(Server):
 
         if room.game.activePlayer == 0:
             self.playerIdToPlayerChannel[room.player0].Send(
-                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "possibleMoves": room.game.send_possible_moves_for_network(), "color": 0})
+                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(0), "possibleMoves": room.game.send_possible_moves_for_network(0), "color": 0})
             self.playerIdToPlayerChannel[room.player1].Send(
-                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "color": 1})
+                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(1), "color": 1})
         else:
             self.playerIdToPlayerChannel[room.player1].Send(
-                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "possibleMoves": room.game.send_possible_moves_for_network(), "color": 1})
+                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(1), "possibleMoves": room.game.send_possible_moves_for_network(1), "color": 1})
             self.playerIdToPlayerChannel[room.player0].Send(
-                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(), "color": 0})
+                {"action": "getPossibleMoves", "game": room.game.get_board_for_network(0), "color": 0})
 
     def deleteGame(self, game, message):
         if message != "gameOver":

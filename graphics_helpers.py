@@ -82,30 +82,6 @@ def render_centered_text_with_background(font_size, message, color, top_left_x, 
     pg.draw.rect(image, brown_color, [top_left_x, top_left_y, width, height], 2)
     render_centered_text(font_size, message, color, top_left_x, top_left_y, width, height, image)
 
-def load_grey_tiles(window, lower1, upper1, lower2, upper2, n):
-    for i in range(n):
-        for x in range(lower1, upper1, tile_size):
-            for y in range(lower2, upper2 , tile_size):
-                window.blit(Tiles.greyTile, (x, y))
-                pg.draw.rect(window, black_color, (x, y, tile_size, tile_size), 1)
-            lower1 += 40
-            upper1 += 40
-            lower2 += 40
-            upper2 += 40
-
-
-def load_white_tiles(window, lower1, upper1, lower2, upper2, n):
-    for i in range(n):
-        for x in range(lower1, upper1, tile_size):
-            for y in range(lower2, upper2, tile_size):
-                window.blit(Tiles.whiteTile, (x, y))
-                pg.draw.rect(window, black_color, (x, y, tile_size, tile_size), 1)
-            lower1 += 40
-            upper1 += 40
-            lower2 += 40
-            upper2 += 40
-
-
 def load_chatbox(window, messages, scroll, textinput):
     for x in range(437, 547, tile_size):
         for y in range(140, 315, tile_size):
