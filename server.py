@@ -22,8 +22,10 @@ class ClientChannel(Channel):
     def Close(self):
         if self.id in self._server.playerIdToRoom:
             self._server.deleteGame(self._server.playerIdToRoom[self.id], self._server.playerIdToUsername[self.id] + " has left the game.")
-        self._server.playerIdToPlayerChannel.pop(self.id)
-        self._server.playerIdToUsername.pop(self.id)
+        if self.id in self._server.playerIdToPlayerChannel:
+            self._server.playerIdToPlayerChannel.pop(self.id)
+        if self.id in self._server.playerIdToUsername:
+            self._server.playerIdToUsername.pop(self.id)
         self._server.sendPlayers()
 
     def Network_getChallenge(self, data):
