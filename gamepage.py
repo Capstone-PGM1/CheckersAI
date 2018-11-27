@@ -61,11 +61,11 @@ class Page(object):
 
     def settings_quit_btn(self, set_done, set_page):
         if not isinstance(self, WinPage):
-            self.button("quit", 505, 410, 85, 30, tan_color, tan_highlight, lambda: set_done(True))
+            self.button("Quit", 505, 410, 85, 30, tan_color, tan_highlight, lambda: set_done(True))
         if isinstance(self, WinPage):
-            self.button("quit", 510, 385, 80, 30, gold_color, tan_highlight, lambda: set_done(True))
+            self.button("Quit", 510, 385, 80, 30, gold_color, tan_highlight, lambda: set_done(True))
         if not isinstance(self, Settings) and not isinstance(self, WinPage):
-            self.button("settings", 505, 10, 85, 30, tan_color, tan_highlight, lambda: set_page(Settings()))
+            self.button("Settings", 505, 10, 85, 30, tan_color, tan_highlight, lambda: set_page(Settings()))
         if not isinstance(self, Intro):
             if not isinstance(self, WinPage):
                 self.button("Home", 10, 10, 85, 30, tan_color, tan_highlight, lambda: set_page(Intro()))
