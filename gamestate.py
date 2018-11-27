@@ -25,7 +25,7 @@ def get_move_from_player(state):
     else:
         name = "Black"
     print(name + " player's turn")
-    if state.activePlayer == 0:
+    if state.activePlayer == 1:
         show_moves = input("Y for show possible moves, N for input your move... ")
         moves = state.get_all_legal_moves()
         while show_moves != "N":
@@ -48,7 +48,7 @@ def get_move_from_player(state):
                     if move.endRow == row1 and move.endColumn == column1 and move.moves[0].fromRow == row and move.moves[0].fromColumn == column:
                         return move
     else:
-        return state.get_ai_move()
+        return state.get_ai_move(3)
 
 
 # def get_move_from_player_for_network(possibleMoves):

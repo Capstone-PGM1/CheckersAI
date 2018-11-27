@@ -2,8 +2,8 @@ from classes import *
 import numpy as np
 
 ALPHA = 0.1
-GAMMA = 0.9
-# PROBABILITY = 0.9
+GAMMA = 0.6
+PROBABILITY = 0.6
 
 #     # 0 player_kings: int
 #     # 1 other_player_kings: int
@@ -72,11 +72,11 @@ def update_q_value(current_val, new_val):
     return (1 - ALPHA) * current_val + ALPHA * new_val
 
 
-def get_new_q_val(reward, max_q):
-    return reward + GAMMA * max_q
+def get_new_q_val(reward, max_q, gamma=GAMMA):
+    return reward + gamma * max_q
 
 
-def run_training_game(game: GameState, q_player: int, q_table: dict, mm_depth: int, rand_prob):
+def run_training_game(game: GameState, q_player: int, q_table: dict, mm_depth: int, rand_prob=PROBABILITY, gamma=GAMMA):
     moves = game.get_all_legal_moves()
     while not game.is_game_over(moves)[0]:
         from_state = get_state_from_board(game, q_player)
@@ -117,7 +117,7 @@ def run_training_game(game: GameState, q_player: int, q_table: dict, mm_depth: i
         # get the current val
         state_val = q_table.get(from_state)
         cur_val = state_val.get(to_state, 0)
-        q_table[from_state].update({to_state: update_q_value(cur_val, get_new_q_val(0, max_trans_val))})
+        q_table[from_state].update({to_state: update_q_value(cur_val, get_new_q_val(0, max_trans_val, gamma))})
         game.switch_player()
         moves = game.get_all_legal_moves()
     if game.is_draw():
@@ -129,7 +129,7 @@ def run_training_game(game: GameState, q_player: int, q_table: dict, mm_depth: i
             reward = -sys.maxsize - 1
 
     q_table[from_state].update({to_state: update_q_value(q_table[from_state].get(to_state),
-                                                         get_new_q_val(reward, q_table[from_state].get(to_state)))})
+                                                         get_new_q_val(reward, q_table[from_state].get(to_state), gamma))})
     if game.is_draw():
         return 0
     else:

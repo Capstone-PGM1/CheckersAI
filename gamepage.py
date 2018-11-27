@@ -11,6 +11,7 @@ import os.path
 from random_usernames import *
 import random
 from datetime import datetime
+from numpy import load
 
 settings_file_name = "lyra_checkers_settings.txt"
 
@@ -226,7 +227,7 @@ class OnePlayerOptions(Page):
         self.button("Black", 315, 365, 40, 40, tan_color, tan_highlight, lambda: update_page(OnePlayerOptions(1)))
         draw_red_circle(265, 385, settings_circle_radius, settings_outline_radius, self.image)
         draw_black_circle(335, 385, settings_circle_radius, settings_outline_radius, self.image)
-        self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1, color = self.color)))
+        self.button("Easy", 225, 150, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 1, color = self.color, load_qtable=True)))
         self.button("Medium", 225, 205, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 3, color = self.color)))
         self.button("Hard", 225, 260, 150, 30, tan_color, tan_highlight, lambda: update_page(GamePage(True, 5, color = self.color)))
 
@@ -287,7 +288,7 @@ class TwoPlayerOptions(Page):
 
 
 class GamePage(Page):
-    def __init__(self, ai_game=False, ai_depth = 1, networked_game = False, color = 0):
+    def __init__(self, ai_game=False, ai_depth = 1, networked_game = False, color = 0, load_qtable=False):
         Page.__init__(self)
         self.initial_click = None
         self.piece = Pieces()
@@ -301,6 +302,7 @@ class GamePage(Page):
         self.networked_game = networked_game
         self.AIdepth = ai_depth
         self.color = color
+        self.qTable = {} if not load_qtable else load("450000_exp4.npy").item()
 
     def handle_event(self, event, set_page, client):
         if (self.gameState.activePlayer == self.color or not self.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
@@ -310,7 +312,7 @@ class GamePage(Page):
             elif client and client.has_current_game and event.button == 5:
                 self.scroll += 1
         elif self.AIgame and self.gameState.activePlayer != self.color and not self.gameState.is_game_over(self.gameState.get_all_legal_moves())[0]:
-            self.gameState.update_game_state_with_move_helper(self.gameState.get_ai_move(self.AIdepth))
+            self.gameState.update_game_state_with_move_helper(self.gameState.get_ai_move(self.AIdepth, self.qTable))
             self.gameState.switch_player()
 
     def get_text_input(self, events, client):
