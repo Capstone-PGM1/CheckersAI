@@ -1,6 +1,7 @@
 import copy
 import sys
 from classes_helpers import *
+from numpy import random
 
 
 # a one move from Cell to Cell, part of LegalMove
@@ -394,10 +395,12 @@ class GameState(object):
 
     # get ai move for 1-player game. Currently calling for minimax algo to find out best move
     # if several moves has same value, use random number to select one of those
-    def get_ai_move(self, depth) -> LegalMove:
-        cur_val, move = self.minimax_alphabeta(depth, -sys.maxsize - 1, sys.maxsize, False)
-        # print("Moving to row " + str(move.endRow) + " column " + str(move.endColumn) + " from row " +
-        #       str(move.moves[0].fromRow) + " column " + str(move.moves[0].fromColumn))
+    def get_ai_move(self, depth, q_table={}) -> LegalMove:
+        if depth != 1:
+            cur_val, move = self.minimax_alphabeta(depth, -sys.maxsize - 1, sys.maxsize, False)
+        else:
+            move = self.get_qlearner_move(self.activePlayer, q_table)
+        # print("Moving to row " + str(move.endRow) + " column " + str(move.endColumn) + " from row " + str(move.moves[0].fromRow) + " column " + str(move.moves[0].fromColumn))
         return move
 
     # calculate value of state using minimax  with alpha-beta pruning
@@ -406,7 +409,7 @@ class GameState(object):
         moves = self.get_all_legal_moves()
         if depth == 0 or self.is_game_over(moves)[0]:  # game over == terminal node
             return self.get_state_value(is_maximizing), LegalMove(0, 0, 0, [])
-        move_to_return = LegalMove(0, 0, 0, [])
+        move_to_return = moves[0]
         if is_maximizing:
             val = -sys.maxsize - 1
             for move in moves:
@@ -439,3 +442,67 @@ class GameState(object):
                     beta = val
                     move_to_return = move
             return val, move_to_return
+
+    def get_qstate_from_board(self, q_player: int):
+        state = new_qstate()
+        q_first_row = 0 if q_player == RED else 7
+        min_first_row = 7 if q_player == RED else 0
+
+        for row in range(8):
+            for column in range(8):
+                if self.board[row][column].upper() == piece_to_letter(q_player, True):
+                    if self.board[row][column].isupper():
+                        state[0] = state[0] + 1
+                    else:
+                        state[2] = state[2] + 11
+                    path = []
+                    self.calculate_legal_jumps(row, column, 0, [], path)
+                    if len(path) == 0:
+                        self.calculate_simple_moves(row, column, path)
+                        if len(path) == 0:
+                            state[8] = state[8] + 1
+                    if column == 0 or column == 7:
+                        state[4] = state[4] + 1
+                    if row == q_first_row:
+                        state[10] = state[10] + 1
+                elif self.board[row][column] != 'x':
+                    if self.board[row][column].isupper():
+                        state[1] = state[1] + 1
+                    else:
+                        state[2] = state[2] + 1
+                    if row == min_first_row:
+                        state[11] = state[11] + 1
+                    if column == 0 or column == 7:
+                        state[5] = state[5] + 1
+                    path = []
+                    self.calculate_legal_jumps(row, column, 0, [], path)
+                    if len(path) == 0:
+                        self.calculate_simple_moves(row, column, path)
+                        if len(path) == 0:
+                            state[9] = state[9] + 1
+        return qstate_to_string(state)
+
+    def get_qlearner_move(self, q_player: int, q_table: dict):
+        moves = self.get_all_legal_moves()
+        from_state = self.get_qstate_from_board(q_player)
+        if len(moves) == 1:
+            move = moves[0]  # sometimes there is just 1 jump available
+        else:
+            state_val = q_table.get(from_state)
+            if state_val is None:
+                print("New State")
+                move = random.choice(moves)
+            else:
+                max_q_val = -sys.maxsize - 1
+                move = moves[0]
+                for m in moves:
+                    copy_game = GameState(copy.deepcopy(self.board), self.emptyMoves, self.activePlayer)
+                    copy_game.update_game_state_with_move_helper(m)
+                    to_state = copy_game.get_qstate_from_board(q_player)
+                    trans_val = state_val.get(to_state, 0)
+                    if trans_val > max_q_val:
+                        max_q_val = trans_val
+                        move = m
+                    elif trans_val == max_q_val:
+                        move = random.choice([move, m])
+        return move

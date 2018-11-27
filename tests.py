@@ -335,45 +335,46 @@ from qlearning import *
 #run_game_state(GameState())
 
 np.random.seed()
-# win = 0
-# lose = 0
-# draw = 0
-# q_table = np.load('99999_exp3.npy').item()
-# red_player = RED
-# probability = 1
-# for i in range(400000):
-#     result = run_training_game(GameState(), red_player, q_table, 1, probability)
-#     if result > 0:
-#         win = win + 1
-#     elif result == 0:
-#         draw = draw + 1
-#     else:
-#         lose = lose + 1
-#     red_player = other_player(red_player)
-#     if i != 0 and (i % 50000) == 0:
-#         np.save(str(i) + "_exp3", q_table)
-#         print(str(i) + " games: win " + str(win) + " lose " + str(lose) + " draw " + str(draw))
-#         win = 0
-#         lose = 0
-#         draw = 0
-#         probability = probability - 0.1
-
-
-q_table = np.load('99999_exp4.npy').item()
-red_player = RED
 win = 0
-loose = 0
+lose = 0
 draw = 0
-for i in range(10000):
-    print(i)
-    result = run_checking_game(GameState(), red_player, q_table, 1)
+q_table = np.load('450000_exp4.npy').item()
+q_player = RED
+probability = 0.6
+for i in range(1, 500001):
+    result = run_training_game(GameState(), q_player, q_table, 2, probability)
     if result > 0:
         win = win + 1
     elif result == 0:
         draw = draw + 1
     else:
-        loose = loose + 1
-    red_player = other_player(red_player)
-print("WIN " + str(win))
-print("LOOSE " + str(loose))
-print("DRAW " + str(draw))
+        lose = lose + 1
+    q_player = other_player(q_player)
+    if (i % 50000) == 0:
+        np.save(str(i) + "_exp5", q_table)
+        print(str(i) + " games: win " + str(win) + " lose " + str(lose) + " draw " + str(draw))
+        win = 0
+        lose = 0
+        draw = 0
+        if (i % 100000) == 0 and probability > 0.3:
+            probability = probability - 0.1
+
+
+# q_table = np.load('400000_exp5.npy').item()
+# red_player = RED
+# win = 0
+# loose = 0
+# draw = 0
+# for i in range(1000):
+#     print(i)
+#     result = run_checking_game(GameState(), red_player, q_table, 1)
+#     if result > 0:
+#         win = win + 1
+#     elif result == 0:
+#         draw = draw + 1
+#     else:
+#         loose = loose + 1
+#     red_player = other_player(red_player)
+# print("WIN " + str(win))
+# print("LOOSE " + str(loose))
+# print("DRAW " + str(draw))

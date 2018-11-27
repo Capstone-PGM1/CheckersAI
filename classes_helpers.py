@@ -28,3 +28,11 @@ def piece_possible_moves(row, column, moves):
 def send_possible_moves_for_network(possible_moves):
     return [{"endRow": x.endRow, "endColumn": x.endColumn, "piecesNumber": x.piecesNumber,
              "moves": {(y.fromRow, y.fromColumn): (y.toRow, y.toColumn) for y in x.moves}} for x in possible_moves]
+
+
+def qstate_to_string(state):
+    return "".join(str(s) for s in state)
+
+
+def new_qstate():
+    return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
