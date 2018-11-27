@@ -49,6 +49,21 @@ def draw_circle(x, y, color, outline_color, circle_radius, outline_radius, windo
     pg.draw.circle(window, outline_color, (x, y), outline_radius)
     pg.draw.circle(window, color, (x, y), circle_radius)
 
+def border(window):
+    for x in range(0, 10, 10):
+        for y in range(0, 900, 10):
+            window.blit(Tiles.blackTile, (x, y))
+    for x in range(590, 600, 10):
+        for y in range(0, 900, 10):
+            window.blit(Tiles.blackTile, (x, y))
+
+    for x in range(0, 620, 10):
+        for y in range(0, 10, 10):
+            window.blit(Tiles.blackTile, (x, y))
+
+    for x in range(0, 620, 10):
+        for y in range(440, 450, 10):
+            window.blit(Tiles.blackTile, (x, y))
 
 def render_text(font_size, message, color):
     scale = 1 if is_mac else 0.8
