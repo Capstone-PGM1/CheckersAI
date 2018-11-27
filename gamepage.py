@@ -561,6 +561,8 @@ class ScreenControl(object):
             self.page.message = message
 
     def set_client(self, client):
+        if not client and self.client:
+            self.client.close()
         self.client = client
 
     def set_done(self, done):

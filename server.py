@@ -150,7 +150,10 @@ class CheckersServer(Server):
     def Launch(self):
         while True:
             self.Pump()
-            sleep(0.0001)
+            if len(self.playerIdToPlayerChannel):
+                sleep(0.01)
+            else:
+                sleep(2)
 
 if __name__ == '__main__':
     host = "localhost"

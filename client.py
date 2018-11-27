@@ -31,6 +31,9 @@ class Client(ConnectionListener):
         print
         "connected to the server"
 
+    def close(self):
+        connection.Close()
+
     def Network_error(self, data):
         self.error = True
         if ("error_message" in data):
@@ -134,9 +137,8 @@ class Client(ConnectionListener):
 
 
 def startClient(username):
-    #  TODO: make this a real server one day.
-    # return Client('45.33.41.181', 12345)
-    client = Client('localhost', 12345)
+    client = Client('45.33.41.181', 12345)
+    # client = Client('localhost', 12345)
     client.update_username(username)
     return client
 
@@ -145,4 +147,4 @@ if __name__ == '__main__':
 
     while 1:
         c.Loop()
-        sleep(0.001)
+        sleep(0.01)
