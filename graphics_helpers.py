@@ -69,7 +69,7 @@ def render_text(font_size, message, color):
     scale = 1 if is_mac else 0.8
     # Copyright (c) 2010-2013 by tyPoland Lukasz Dziedzic with Reserved Font Name "Carlito".
     myfont = pg.font.Font("Carlito-BoldItalic.ttf", int(font_size * scale))
-    textsurface = myfont.render(message, False, color)
+    textsurface = myfont.render(message, True, color)
     return textsurface, textsurface.get_rect()
 
 def render_centered_text(font_size, message, color, top_left_x, top_left_y, width, height, image):
