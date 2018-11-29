@@ -188,7 +188,7 @@ class Settings(Page):
 
     def load_buttons(self, update_page=None, update_client=None, client=None):
         if (client):
-            self.button("Don't play online", 350, 225, 150, 30, tan_color, tan_highlight, lambda: update_client(None))
+            self.button("Disconnect", 350, 225, 150, 30, tan_color, tan_highlight, lambda: update_client(None))
         else:
             self.button("List Online", 350, 225, 150, 30, tan_color, tan_highlight, lambda: update_client(startClient(self.user_info[0])))
         self.button("Save Username", 350, 150, 150, 30, tan_color, tan_highlight, lambda: self.update_username(), font_size=20)
@@ -254,7 +254,7 @@ class TwoPlayerOptions(Page):
         if not client:
             self.button("Play Online", 100, 200, 150, 30, tan_color, tan_highlight, lambda: update_client(startClient(self.user_info[0])))
         else:
-            self.button("Don't play online", 100, 200, 150, 30, tan_color, tan_highlight, lambda: update_client(None))
+            self.button("Disconnect", 100, 200, 150, 30, tan_color, tan_highlight, lambda: update_client(None))
             self.show_available_players(client)
         self.show_message(client)
 
