@@ -34,6 +34,8 @@ modified_red_outline = (181, 13, 113)
 modified_red_color = (255, 0, 100)
 modified_black_outline = (50, 47, 100)
 modified_black_color = (0, 0, 50)
+modified_gold_color = (233, 218, 110)
+modified_gold_outline = (216, 171, 123)
 
 is_mac = os.name == 'java'
 
@@ -73,9 +75,29 @@ def select_black_circle(x, y, circle_radius, outline_radius, window: pg.Surface)
     pg.draw.circle(window, light_green, (x, y), outline_radius + 5, 10)
 
 def draw_circle(x, y, color, outline_color, circle_radius, outline_radius, window: pg.Surface):
-
-    pg.draw.circle(window, outline_color, (x, y), outline_radius)
-    pg.draw.circle(window, color, (x, y), circle_radius)
+    if is_mac:
+        pg.gfxdraw.aacircle(window, x, y, outline_radius, outline_color)
+        pg.gfxdraw.filled_circle(window, x, y, outline_radius, outline_color)
+        pg.gfxdraw.aacircle(window, x, y, circle_radius, color)
+        pg.gfxdraw.filled_circle(window, x, y, circle_radius, color)
+    else:
+        if color == gold_color: #gold
+            pg.gfxdraw.aacircle(window, x, y, outline_radius, modified_gold_outline)
+            pg.gfxdraw.filled_circle(window, x, y, outline_radius, outline_color)
+            pg.gfxdraw.aacircle(window, x, y, circle_radius, modified_gold_color)
+            pg.gfxdraw.filled_circle(window, x, y, circle_radius, color)
+        elif color == red_color: # red
+            pg.gfxdraw.aacircle(window, x, y, outline_radius, modified_red_outline)
+            pg.gfxdraw.filled_circle(window, x, y, outline_radius, outline_color)
+            pg.gfxdraw.aacircle(window, x, y, circle_radius, modified_red_color)
+            pg.gfxdraw.filled_circle(window, x, y, circle_radius, color)
+        else: # black
+            pg.gfxdraw.aacircle(window, x, y, outline_radius, modified_black_outline)
+            pg.gfxdraw.filled_circle(window, x, y, outline_radius, outline_color)
+            pg.gfxdraw.aacircle(window, x, y, circle_radius, modified_black_color)
+            pg.gfxdraw.filled_circle(window, x, y, circle_radius, color)
+    # pg.draw.circle(window, outline_color, (x, y), outline_radius)
+    # pg.draw.circle(window, color, (x, y), circle_radius)
 
 def border(window):
     for x in range(0, 10, 10):
