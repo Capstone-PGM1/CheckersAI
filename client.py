@@ -23,12 +23,6 @@ class Client(ConnectionListener):
         self.winner_name = ""
         self.color = 0
 
-    def Network(self, data):
-        print('network data:', data)
-
-    def Network_connected(self, data):
-        print("connected to the server")
-
     def close(self):
         connection.Close()
 
