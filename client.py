@@ -24,12 +24,10 @@ class Client(ConnectionListener):
         self.color = 0
 
     def Network(self, data):
-        print
-        'network data:', data
+        print('network data:', data)
 
     def Network_connected(self, data):
-        print
-        "connected to the server"
+        print("connected to the server")
 
     def close(self):
         connection.Close()
@@ -45,7 +43,6 @@ class Client(ConnectionListener):
 
     def Network_receiveId(self, data):
         self.id = data['id']
-        print("hello, you have joined the game. You are player " + str(self.id))
 
     def update_username(self, username):
         connection.Send({"action": "updateUsername", "username": username})

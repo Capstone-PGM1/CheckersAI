@@ -150,7 +150,6 @@ def run_checking_game(game: GameState, q_player: int, q_table: dict, mm_depth: i
             if game.activePlayer == q_player:
                 state_val = q_table.get(from_state)
                 if state_val is None:
-                    print("New State")
                     move = np.random.choice(moves)
                 else:
                     max_q_val = -sys.maxsize - 1
