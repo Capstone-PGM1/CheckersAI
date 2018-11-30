@@ -319,7 +319,7 @@ class GamePage(Page):
         self.qTable = {} if not load_qtable else load("450000_exp4.npy").item()
 
     def handle_event(self, event, set_page, client):
-        if (self.gameState.activePlayer == self.color or not self.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
+        if (self.screen_rect and self.gameState.activePlayer == self.color or not self.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
             self.handleGameClick(client)
             if client and client.has_current_game and event.button == 4:
                 self.scroll -= 1
