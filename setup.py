@@ -13,6 +13,6 @@ setup(
     description = "Project Lyra - Checkers Game",
     options = {
         "build_exe": {"packages": ["pygame", "PodSixNet", "numpy"],
-                      "include_files": ["wood.jpg", "white.jpg", "tan.png", "king.png", "grey.png", "black.png", "Carlito-BoldItalic.ttf", "450000_exp4.npy"]}
+                      "include_files": ["wood.jpg", "white.jpg", "tan.png", "king.png", "grey.png", "black.png", "Carlito-BoldItalic.ttf", "q_table.npy"]}
     },
     executables = [Executable("gamepage.py", base = base, targetName="checkers.exe")])
