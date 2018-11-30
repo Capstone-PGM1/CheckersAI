@@ -316,7 +316,7 @@ class GamePage(Page):
         self.networked_game = networked_game
         self.AIdepth = ai_depth
         self.color = color
-        self.qTable = {} if not load_qtable else load("450000_exp4.npy").item()
+        self.qTable = {} if not load_qtable else load("q_table.npy").item()
 
     def handle_event(self, event, set_page, client):
         if self.screen_rect and (self.gameState.activePlayer == self.color or not self.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
