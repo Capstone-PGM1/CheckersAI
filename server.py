@@ -1,7 +1,7 @@
 from PodSixNet.Server import Server
 from PodSixNet.Channel import Channel
 
-from gamestate import *
+from classes import *
 
 from time import sleep
 
