@@ -544,7 +544,7 @@ class ScreenControl(object):
             if not os.path.exists(settings_file_name):
                 file = open(settings_file_name, 'x')
                 # username, wins, losses, draws.
-                username = usernames[random.randint(0, 88)]
+                username = usernames[random.randint(0, 60)]
                 file.write(username + "\n0\n0\n0")
                 file.close()
             user_info_file = open(settings_file_name, 'r')
