@@ -319,7 +319,7 @@ class GamePage(Page):
         self.qTable = {} if not load_qtable else load("450000_exp4.npy").item()
 
     def handle_event(self, event, set_page, client):
-        if (self.screen_rect and self.gameState.activePlayer == self.color or not self.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
+        if self.screen_rect and (self.gameState.activePlayer == self.color or not self.AIgame) and event.type == pg.MOUSEBUTTONDOWN:
             self.handleGameClick(client)
             if client and client.has_current_game and event.button == 4:
                 self.scroll -= 1
@@ -463,10 +463,6 @@ class WinPage(Page):
         for h in [50, 400]:
             draw_circle(50, h, winnerColor2, winnerColor1, 40, 45, self.image)
             draw_circle(550, h, winnerColor2, winnerColor1, 40, 45, self.image)
-
-        # TODO: this isn't a button. If we turn it into a button, where should it lead to?
-        # self.image.blit(render_text(25, "Play", gold_color)[0], (535, 385))
-        # self.image.blit(render_text(25, "Again", gold_color)[0], (530, 405))
 
         for i in range(5):
             draw_circle(150 + 75 * i, 400, gold_color, gold_outline, 25, 30, self.image)

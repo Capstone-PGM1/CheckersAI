@@ -59,11 +59,12 @@ class Client(ConnectionListener):
     # When the server sends the list of players, display possible
     # players on the screen
     def Network_getPlayers(self, data):
-        self_index = data['players'].index(str(self.id))
-        data['players'].pop(self_index)
-        self.other_players = data['players']
-        data['usernames'].pop(self_index)
-        self.other_players_usernames = data['usernames']
+        if hasattr(self, "id"):
+            self_index = data['players'].index(str(self.id))
+            data['players'].pop(self_index)
+            self.other_players = data['players']
+            data['usernames'].pop(self_index)
+            self.other_players_usernames = data['usernames']
 
     def send_challenge(self, otherPlayerId, playerName):
         if not self.pending_challenge:

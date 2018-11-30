@@ -52,8 +52,6 @@ def draw_red_circle(x, y, circle_radius, outline_radius, window: pg.Surface):
         pg.gfxdraw.filled_circle(window, x, y, outline_radius, red_outline)
         pg.gfxdraw.aacircle(window, x, y, circle_radius, red_color)
         pg.gfxdraw.filled_circle(window, x, y, circle_radius, red_color)
-    # pg.draw.circle(window, red_outline, (x, y), outline_radius)
-    # pg.draw.circle(window, red_color, (x, y), circle_radius, 0)
 
 def select_red_circle(x, y, circle_radius, outline_radius, window: pg.Surface):
     pg.draw.circle(window, light_green, (x, y), outline_radius + 5, 10)
@@ -69,9 +67,6 @@ def draw_black_circle(x, y, circle_radius, outline_radius, window: pg.Surface):
         pg.gfxdraw.filled_circle(window, x, y, outline_radius, black_outline)
         pg.gfxdraw.aacircle(window, x, y, circle_radius, modified_black_color)
         pg.gfxdraw.filled_circle(window, x, y, circle_radius, black_color)
-
-    # pg.draw.circle(window, black_outline, (x, y), outline_radius)
-    # pg.draw.circle(window, black_color, (x, y), circle_radius)
 
 def select_black_circle(x, y, circle_radius, outline_radius, window: pg.Surface):
     pg.draw.circle(window, light_green, (x, y), outline_radius + 5, 10)
@@ -98,8 +93,6 @@ def draw_circle(x, y, color, outline_color, circle_radius, outline_radius, windo
             pg.gfxdraw.filled_circle(window, x, y, outline_radius, outline_color)
             pg.gfxdraw.aacircle(window, x, y, circle_radius, modified_black_color)
             pg.gfxdraw.filled_circle(window, x, y, circle_radius, color)
-    # pg.draw.circle(window, outline_color, (x, y), outline_radius)
-    # pg.draw.circle(window, color, (x, y), circle_radius)
 
 def border(window):
     for x in range(0, 10, 10):
@@ -154,6 +147,10 @@ def load_chatbox(window, messages, scroll, textinput, cursor_position):
         message = wrap_text(textinput, 15)
         cursor = get_cursor_position(message, cursor_position)
         drawText(window, message, black_color, [440, 290, 120, 50], 0, num_lines = 3, cursor_position = cursor)
+    elif int(round(time.time()*1000.0)) % 1000 > 500:
+        myfont = pg.font.SysFont('Arial', 20)
+        image = myfont.render("|", True, black_color)
+        window.blit(image, (440, 290))
     return new_scroll
 
 def get_cursor_position(message, cursor_position):
