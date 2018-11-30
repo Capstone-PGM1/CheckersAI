@@ -1,9 +1,6 @@
-usernames = ["Andromeda", "Antlia", "Apus", "Aquarius", "Aquila", "Ara", "Aries", "Auriga", "Boötes", "Caelum", "Camelopardalis",
- "Cancer", "Canes Venatici", "Canis Major", "Canis Minor", "Capricornus", "Carina", "Cassiopeia", "Centaurus", "Cepheus",
- "Cetus", "Chamaeleon", "Circinus", "Columba", "Coma Berenices", "Corona Austrina", "Corona Borealis", "Corvus", "Crater",
- "Crux", "Cygnus", "Delphinus", "Dorado", "Draco", "Equuleus", "Eridanus", "Fornax", "Gemini", "Grus", "Hercules",
- "Horologium", "Hydra", "Hydrus", "Indus", "Lacerta", "Leo", "Leo Minor", "Lepus", "Libra", "Lupus", "Lynx", "Lyra",
- "Mensa", "Microscopium", "Monoceros", "Musca", "Norma", "Octans", "Ophiuchus", "Orion", "Pavo", "Pegasus", "Perseus",
- "Phoenix", "Pictor", "Pisces", "Piscis Austrinus", "Puppis", "Pyxis", "Reticulum", "Sagitta", "Sagittarius", "Scorpius",
- "Sculptor", "Scutum", "Serpens", "Sextans", "Taurus", "Telescopium", "Triangulum", "Triangulum Australe", "Tucana",
- "Ursa Major", "Ursa Minor", "Vela", "Virgo", "Volans", "Vulpecula"]
+usernames = ['Antlia', 'Apus', 'Aquarius', 'Aquila', 'Ara', 'Aries', 'Auriga', 'Caelum', 'Cancer', 'Carina', 'Cepheus',
+             'Cetus', 'Circinus', 'Columba', 'Corvus', 'Crater', 'Crux', 'Cygnus', 'Dorado', 'Draco', 'Equuleus',
+             'Eridanus', 'Fornax', 'Gemini', 'Grus', 'Hercules', 'Hydra', 'Hydrus', 'Indus', 'Lacerta', 'Leo', 'Lepus',
+             'Libra', 'Lupus', 'Lynx', 'Lyra', 'Mensa', 'Musca', 'Norma', 'Octans', 'Orion', 'Pavo', 'Pegasus',
+             'Perseus', 'Phoenix', 'Pictor', 'Pisces', 'Puppis', 'Pyxis', 'Sagitta', 'Scorpius', 'Sculptor', 'Scutum',
+             'Serpens', 'Sextans', 'Taurus', 'Tucana', 'Vela', 'Virgo', 'Volans']

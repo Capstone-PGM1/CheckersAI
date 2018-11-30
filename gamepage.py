@@ -171,16 +171,25 @@ class Intro(Page):
 class Settings(Page):
     def __init__(self):
         Page.__init__(self)
-        self.textinput = TextInput(repeat_keys_initial_ms=40000, repeat_keys_interval_ms=40000)
+        self.textinput = None
 
     def load_background(self):
         border(self.image)
-        if len(self.textinput.get_text()) == 0 or len(self.textinput.get_text()) > 19:
+
+        if not self.textinput:
             self.textinput = TextInput(repeat_keys_initial_ms=40000, repeat_keys_interval_ms=40000, initial_string = self.user_info[0])
+
+        username = self.textinput.get_text()
+        if len(username) > 9:
+            username = username[:9]
+            self.textinput = TextInput(repeat_keys_initial_ms=40000, repeat_keys_interval_ms=40000, initial_string = username)
+            self.message = "Your username cannot be longer than 9 characters."
+            self.show_message(None)
+
 
         render_centered_text_with_background(70, "Settings", black_color, 100, 25, 400, 80, self.image, tan_color)
         render_centered_text_with_background(20, 'USERNAME', black_color, 100, 150, 150, 30, self.image, tan_color)
-        render_centered_text_with_background(20, self.textinput.get_text(), black_color, 100, 180, 150, 30, self.image, white_color)
+        render_centered_text_with_surface(self.textinput.get_surface(), 100, 180, 150, 30, self.image, white_color)
         render_centered_text_with_background(20, "STATISTICS", black_color, 100, 225, 150, 30, self.image, tan_color)
         render_centered_text_with_background(20, "Wins: " + self.user_info[1], black_color, 100, 255, 150, 30, self.image, tan_color)
         render_centered_text_with_background(20, "Losses: " + self.user_info[2], black_color, 100, 285, 150, 30, self.image, tan_color)
@@ -196,7 +205,7 @@ class Settings(Page):
         self.show_message(client)
 
     def get_text_input(self, events, client):
-        if self.textinput.update(events):
+        if self.textinput and self.textinput.update(events):
             self.update_username()
 
     def update_username(self):
@@ -204,7 +213,12 @@ class Settings(Page):
         if text:
             self.user_info[0] = text
             self.update_user_settings()
+            self.message = "Your username has been updated."
+            self.show_message(None)
             return self.user_info
+        else:
+            self.message = "Username cannot be empty."
+            self.show_message(None)
 
 
 class OnePlayerOptions(Page):
@@ -316,12 +330,11 @@ class GamePage(Page):
             self.gameState.switch_player()
 
     def get_text_input(self, events, client):
-        if client and client.has_current_game:
-            if self.textinput.update(events):
-                text = self.textinput.get_text()
-                if text:
-                    client.sendMessage(self.textinput.get_text())
-                    self.textinput.clear_text()
+        if client and client.has_current_game and self.textinput.update(events):
+            text = self.textinput.get_text()
+            if text:
+                client.sendMessage(text)
+                self.textinput.clear_text()
 
     def load_buttons(self, update_page=None, update_client=None, client=None):
         if self.networked_game and not (client and client.has_current_game):
@@ -339,7 +352,12 @@ class GamePage(Page):
                 self.update_user_settings()
             update_page(WinPage(is_win, self.get_winner_name(is_win, client)))
         elif client and client.has_current_game:
-            self.scroll = load_chatbox(self.image, client.messages, self.scroll, self.textinput.get_text())
+            text = self.textinput.get_text()
+            if len(text) > 45:
+                text = text[:45]
+                self.textinput = TextInput(repeat_keys_interval_ms=40000, repeat_keys_initial_ms=40000, initial_string=text)
+
+            self.scroll = load_chatbox(self.image, client.messages, self.scroll, self.textinput.get_text(), self.textinput.cursor_position)
             self.board = client.board
             self.possible_moves = client.possible_moves if client.possible_moves else []
             self.color = client.color

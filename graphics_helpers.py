@@ -1,6 +1,8 @@
 import pygame as pg
 from tiles import *
 import os
+from pygame_textinput import *
+import time
 import pygame.gfxdraw
 
 CAPTION = "Lyra's Checkers"
@@ -132,28 +134,42 @@ def render_centered_text_with_background(font_size, message, color, top_left_x, 
     pg.draw.rect(image, brown_color, [top_left_x, top_left_y, width, height], 2)
     render_centered_text(font_size, message, color, top_left_x, top_left_y, width, height, image)
 
-def load_chatbox(window, messages, scroll, textinput):
+def render_centered_text_with_surface(surface, top_left_x, top_left_y, width, height, image, background):
+    pg.draw.rect(image, background, [top_left_x, top_left_y, width, height])
+    pg.draw.rect(image, brown_color, [top_left_x, top_left_y, width, height], 2)
+    rect = surface.get_rect()
+    rect.center = ((top_left_x + (width / 2)), top_left_y + (height / 2))
+    image.blit(surface, rect)
+
+def load_chatbox(window, messages, scroll, textinput, cursor_position):
     for x in range(437, 547, tile_size):
         for y in range(140, 315, tile_size):
             window.blit(Tiles.tanTile, (x, y))
         pg.draw.rect(window, (54, 32, 3), [437, 290, 120, 50], 3)
 
     text = wrap_text('\n'.join(messages), 15)
-    new_scroll =  drawText(window, text, black_color, [437, 140, 120, 150], scroll)
+    new_scroll =  drawText(window, text, black_color, [440, 140, 120, 150], scroll)
 
     if textinput:
         message = wrap_text(textinput, 15)
-        drawText(window, message, black_color, [437, 290, 120, 50], 0, num_lines = 3)
+        cursor = get_cursor_position(message, cursor_position)
+        drawText(window, message, black_color, [440, 290, 120, 50], 0, num_lines = 3, cursor_position = cursor)
     return new_scroll
+
+def get_cursor_position(message, cursor_position):
+    index = 0
+    length_so_far = 0
+    for line in message:
+        cursor_location_in_line = cursor_position - length_so_far
+        length_so_far += len(line)
+        if length_so_far >= cursor_position:
+            return index, cursor_location_in_line
+        index += 1
+    return (len(message) - 1, cursor_position - len(''.join(message[:-1])))
 
 
 # Modified wrap_text from https://github.com/ColdrickSotK/yamlui/blob/master/yamlui/util.py#L82-L143
 def wrap_text(text, num_chars):
-    """Wrap text to fit inside a given width when rendered.
-    :param text: The text to be wrapped.
-    :param font: The font the text will be rendered in.
-    :param width: The width to wrap to.
-    """
     text_lines = text.replace('\t', '    ').split('\n')
 
     wrapped_lines = []
@@ -182,9 +198,9 @@ def wrap_text(text, num_chars):
                 line = line[num_chars:]
     return wrapped_lines
 
-# modified text from https://www.reddit.com/r/pygame/comments/5lhp28/how_do_i_get_mouse_wheel_events/
+# modified drawText from https://www.reddit.com/r/pygame/comments/5lhp28/how_do_i_get_mouse_wheel_events/
 # draw some text into an area of a surface
-def drawText(surface, text, color, rectangle, scroll, button = None, height = None, num_lines = 8, onClickButton = None, ids = None):
+def drawText(window, text, color, rectangle, scroll, button = None, height = None, num_lines = 8, onClickButton = None, ids = None, cursor_position = None):
     y = rectangle[1]
     lineSpacing = 2
     myfont = pg.font.SysFont('Arial', 20)
@@ -203,6 +219,10 @@ def drawText(surface, text, color, rectangle, scroll, button = None, height = No
             button(text[i], rectangle[0], y, 180, 30, tan_color, tan_highlight, lambda : onClickButton(ids[i], text[i]))
         else:
             image = myfont.render(text[i], True, color)
-            surface.blit(image, (rectangle[0], y))
+            window.blit(image, (rectangle[0], y))
+            if cursor_position and i == cursor_position[0] and int(round(time.time()*1000.0)) % 1000 > 500:
+                cursor_y_pos = myfont.size(text[i][:cursor_position[1]])[0]
+                image = myfont.render("|", True, color)
+                window.blit(image, (rectangle[0] + cursor_y_pos, y))
         y += fontHeight + lineSpacing
     return scroll
